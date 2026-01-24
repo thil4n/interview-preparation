@@ -1,0 +1,133 @@
+{
+  "agile": [
+    "questions.md"
+  ],
+  "algorithms": [
+    "coding-problems.md",
+    "complexity.md",
+    "questions.md",
+    "recursion.md",
+    "sorting.md"
+  ],
+  "api": [
+    "concepts.md",
+    "graphql.md",
+    "kafka.md",
+    "rest.md",
+    "soap.md",
+    "streaming.md"
+  ],
+  "ballerina": [
+    "basics.md"
+  ],
+  "cloud": [
+    "aws.md",
+    "concepts.md",
+    "docker.md"
+  ],
+  "concurrency": [
+    "multithreading.md"
+  ],
+  "cryptography": [
+    "concepts.md",
+    "rsa.md"
+  ],
+  "data-structures": [
+    "array.md",
+    "heap.md",
+    "stack.md"
+  ],
+  "database": [
+    "acid.md",
+    "concepts.md",
+    "indexing.md",
+    "normalization.md",
+    "nosql.md",
+    "scenario.md",
+    "sql.md"
+  ],
+  "design-patterns": [
+    "basics.md"
+  ],
+  "devops": [
+    "cicd.md",
+    "docker.md",
+    "kubernates.md"
+  ],
+  "git": [
+    "basics.md",
+    "commands.md",
+    "confilcts.md"
+  ],
+  "hr": [
+    "questions.md"
+  ],
+  "java": [
+    "java-collections-advanced.md",
+    "java-collections.md",
+    "java-data-types.md",
+    "java-exceptions.md",
+    "java-keywords.md",
+    "java-oop.md",
+    "java-strings.md",
+    "java-threading.md"
+  ],
+  "javascript": [
+    "questions.md"
+  ],
+  "linux": [
+    "questions.md"
+  ],
+  "microservices": [
+    "microservices.md"
+  ],
+  "ml": [
+    "basics.md"
+  ],
+  "networking": [
+    "http.md",
+    "osi.md",
+    "ssh.md",
+    "ssl.md",
+    "tcp.md"
+  ],
+  "node": [
+    "questions.md"
+  ],
+  "oop": [
+    "abstraction.md",
+    "basics.md",
+    "encapsulation.md",
+    "inheritance.md",
+    "polymorphism.md"
+  ],
+  "python": [
+    "basics.md",
+    "oop.md"
+  ],
+  "questions": [
+    "quiestions.md"
+  ],
+  "react": [
+    "interview-guide.md",
+    "quiestions.md",
+    "react.md"
+  ],
+  "security": [
+    "network-security.md",
+    "penetration-testing.md"
+  ],
+  "soft-skill": [
+    "soft-skills.md"
+  ],
+  "spring": [
+    "questions.md"
+  ],
+  "system-design": [
+    "api-design.md",
+    "scalability.md"
+  ],
+  "testing": [
+    "questions.md"
+  ]
+}
