@@ -23,7 +23,7 @@ A modern, production-ready documentation website for technical interview prepara
 
 ```bash
 # Clone the repo
-git clone https://github.com/PramithaMJ/interview-preparation.git
+git clone https://github.com/thil4n/interview-preparation.git
 cd interview-preparation
 
 # Start a local server (required for fetch API)
