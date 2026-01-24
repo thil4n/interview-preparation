@@ -31,6 +31,12 @@ class AppController {
         // Handle initial route
         router.handleRouteChange();
 
+        // Render welcome screen if on home route (initial load)
+        const state = stateManager.getState();
+        if (!state.currentFolder || !state.currentFile) {
+            renderer.renderWelcome();
+        }
+
         this.initialized = true;
 
         // Expose for debugging
