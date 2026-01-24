@@ -14,7 +14,6 @@ A modern, production-ready documentation website for technical interview prepara
 - 🔍 **Smart Search** - Filter topics with `⌘K` shortcut
 - 📱 **Responsive** - Works on desktop and mobile
 - ⚡ **Fast** - Static site with markdown caching
-- 🏗️ **SOLID Architecture** - Modular, maintainable code
 
 ---
 
@@ -117,16 +116,6 @@ interview-preparation/
 ├── styles.css            # GitHub-inspired theme
 └── structure.json        # Auto-generated structure
 ```
-
-### SOLID Principles Applied
-
-| Principle | Implementation |
-|-----------|----------------|
-| **Single Responsibility** | Each module has one job |
-| **Open/Closed** | Easy to add new topics without code changes |
-| **Liskov Substitution** | Modules are interchangeable |
-| **Interface Segregation** | Minimal dependencies between modules |
-| **Dependency Inversion** | AppController orchestrates all services |
 
 ---
 
