@@ -1,156 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Directory Tree View</title>
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <style>
-        .folder {
-            cursor: pointer;
-        }
-        .folder ul {
-            display: none;
-            margin-left: 20px;
-        }
-        .folder.open ul {
-            display: block;
-        }
-    </style>
+    <meta name="description"
+        content="Interview Preparation - Your comprehensive knowledge base for acing technical interviews covering algorithms, data structures, system design, and more.">
+    <meta name="keywords"
+        content="interview preparation, algorithms, data structures, system design, java, javascript, react, database">
+    <title>Interview Prep | Technical Knowledge Base</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
-<script>
-const dirs = {
-    "agile": [
-        "agile/questions.md"
-    ],
-    "algorithms": [
-        "algorithms/complexity.md",
-        "algorithms/general.md",
-        "algorithms/recursion.md",
-        "algorithms/sorting.md"
-    ],
-    "api": [
-        "api/concepts.md",
-        "api/graphql.md",
-        "api/kafka.md",
-        "api/rest.md",
-        "api/soap.md",
-        "api/streaming.md"
-    ],
-    "cloud": [
-        "cloud/concepts.md",
-        "cloud/docker.md"
-    ],
-    "cryptography": [
-        "cryptography/concepts.md",
-        "cryptography/rsa.md"
-    ],
-    "data-structures": [
-        "data-structures/array.md",
-        "data-structures/heap.md",
-        "data-structures/stack.md"
-    ],
-    "database": [
-        "database/concepts.md",
-        "database/mongodb.md",
-        "database/normalization.md",
-        "database/sql.md"
-    ],
-    "design-patterns": [
-        "design-patterns/basics.md"
-    ],
-    "devops": [
-        "devops/concepts.md"
-    ],
-    "git": [
-        "git/basics.md",
-        "git/commands.md"
-    ],
-    "hr": [
-        "hr/questions.md"
-    ],
-    "java": [
-        "java/questions.md"
-    ],
-    "javascript": [
-        "javascript/questions.md"
-    ],
-    "linux": [
-        "linux/questions.md"
-    ],
-    "networking": [
-        "networking/http.md",
-        "networking/osi.md",
-        "networking/ssh.md",
-        "networking/ssl.md",
-        "networking/tcp.md"
-    ],
-    "node": [
-        "node/questions.md"
-    ],
-    "oop": [
-        "oop/abstraction.md",
-        "oop/basics.md",
-        "oop/encapsulation.md",
-        "oop/inheritance.md",
-        "oop/polymorphism.md"
-    ],
-    "react": [
-        "react/react.md"
-    ],
-    "spring": [
-        "spring/questions.md"
-    ],
-    "testing": [
-        "testing/questions.md"
-    ],
-};
 
-function generateDirectoryTree() {
-    const container = document.getElementById('dir-tree');
-    
-    // Create the root folder
-    const rootFolder = document.createElement('ul');
-    
-    for (const dir in dirs) {
-        if (dirs.hasOwnProperty(dir)) {
-            // Create folder for each directory
-            const folder = document.createElement('li');
-            folder.classList.add('folder');
-            const folderName = document.createElement('span');
-            folderName.textContent = dir;
-            folder.appendChild(folderName);
-            
-            // Create a sublist for files in the directory
-            const fileList = document.createElement('ul');
-            dirs[dir].forEach(file => {
-                const fileItem = document.createElement('li');
-                const fileLink = document.createElement('a');
-                fileLink.href = `#`; // Link to file, change if needed
-                fileLink.textContent = file;
-                fileItem.appendChild(fileLink);
-                fileList.appendChild(fileItem);
-            });
-            folder.appendChild(fileList);
-            
-            // Add click event to toggle folder open/close
-            folderName.addEventListener('click', () => {
-                folder.classList.toggle('open');
-            });
-            
-            rootFolder.appendChild(folder);
-        }
-    }
-    
-    container.appendChild(rootFolder);
-}
+<body>
+    <div class="app-container">
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-document.addEventListener('DOMContentLoaded', generateDirectoryTree);
-</script>
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">📚</div>
+                    <h1>Interview Prep</h1>
+                </div>
 
-<body class="bg-red-300">
-    <div class="w-[80%] mx-auto">
-        <div id="dir-tree" class="flex flex-wrap"></div>
+                <!-- Search -->
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search topics..."
+                        autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav id="sidebar-nav" class="sidebar-nav">
+                <!-- Dynamically populated by JavaScript -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18" />
+                    </svg>
+                </button>
+
+                <div id="breadcrumb" class="breadcrumb">
+                    Home
+                </div>
+
+                <div class="header-actions">
+                    <button id="refresh-btn" class="btn btn-secondary" title="Refresh Content">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M23 4v6h-6M1 20v-6h6" />
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Container -->
+            <div id="content-container" class="content-container">
+                <div class="welcome-screen">
+                    <div class="welcome-icon">📚</div>
+                    <h2>Interview Preparation</h2>
+                    <p>Select a topic from the sidebar to start learning. Your knowledge base for acing technical
+                        interviews.</p>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Additional language support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
 </body>
+
 </html>
