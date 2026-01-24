@@ -70,7 +70,7 @@ function discoverMarkdownFiles(folderPath) {
 }
 
 function main() {
-    console.log('🔍 Discovering folders and markdown files...\n');
+    console.log(' Discovering folders and markdown files...\n');
 
     const structure = discoverFolders();
 
@@ -82,13 +82,13 @@ function main() {
     const outputPath = path.join(ROOT_DIR, 'structure.json');
     fs.writeFileSync(outputPath, JSON.stringify(structure, null, 2));
 
-    console.log('📁 Discovered folders:');
+    console.log(' Discovered folders:');
     for (const [folder, files] of Object.entries(structure).sort()) {
         console.log(`   ${folder}/ (${files.length} files)`);
     }
 
-    console.log(`\n✅ Generated structure.json`);
-    console.log(`   📊 ${folderCount} folders, ${fileCount} files total\n`);
+    console.log(`\n Generated structure.json`);
+    console.log(`    ${folderCount} folders, ${fileCount} files total\n`);
 }
 
 main();
