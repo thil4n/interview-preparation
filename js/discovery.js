@@ -18,8 +18,9 @@ class FolderDiscoveryService {
      */
     async discoverFolders() {
         try {
-            // Try to load from pre-generated structure file
-            const response = await fetch(`${Config.basePath}/structure.json`);
+            // Try to load from pre-generated structure file with cache-busting
+            const cacheBuster = `?v=${Date.now()}`;
+            const response = await fetch(`${Config.basePath}/structure.json${cacheBuster}`);
             if (response.ok) {
                 return await response.json();
             }
@@ -36,30 +37,31 @@ class FolderDiscoveryService {
             'agile': ['questions.md'],
             'algorithms': ['coding-problems.md', 'complexity.md', 'questions.md', 'recursion.md', 'sorting.md'],
             'api': ['concepts.md', 'graphql.md', 'kafka.md', 'rest.md', 'soap.md', 'streaming.md'],
-            'ballerina': ['questions.md'],
-            'cloud': ['concepts.md', 'docker.md', 'kubernetes.md'],
-            'concurrency': ['concepts.md'],
+            'ballerina': ['basics.md'],
+            'cloud': ['aws.md', 'concepts.md', 'docker.md'],
+            'concurrency': ['multithreading.md'],
             'cryptography': ['concepts.md', 'rsa.md'],
             'data-structures': ['array.md', 'heap.md', 'stack.md'],
             'database': ['acid.md', 'concepts.md', 'indexing.md', 'normalization.md', 'nosql.md', 'scenario.md', 'sql.md'],
             'design-patterns': ['basics.md'],
-            'devops': ['concepts.md', 'ci-cd.md', 'monitoring.md'],
-            'git': ['basics.md', 'commands.md', 'advanced.md'],
+            'devops': ['cicd.md', 'docker.md', 'kubernates.md'],
+            'git': ['basics.md', 'commands.md', 'confilcts.md'],
             'hr': ['questions.md'],
             'java': ['java-collections-advanced.md', 'java-collections.md', 'java-data-types.md', 'java-exceptions.md', 'java-keywords.md', 'java-oop.md', 'java-strings.md', 'java-threading.md'],
             'javascript': ['questions.md'],
             'linux': ['questions.md'],
             'microservices': ['microservices.md'],
-            'ml': ['concepts.md'],
+            'ml': ['basics.md'],
             'networking': ['http.md', 'osi.md', 'ssh.md', 'ssl.md', 'tcp.md'],
             'node': ['questions.md'],
             'oop': ['abstraction.md', 'basics.md', 'encapsulation.md', 'inheritance.md', 'polymorphism.md'],
-            'python': ['questions.md', 'advanced.md'],
+            'python': ['basics.md', 'oop.md'],
             'questions': ['questions.md'],
-            'react': ['react.md', 'hooks.md', 'state-management.md'],
-            'security': ['concepts.md', 'owasp.md'],
+            'react': ['interview-guide.md', 'quiestions.md', 'react.md'],
+            'security': ['network-security.md', 'penetration-testing.md'],
+            'soft-skill': ['soft-skills.md'],
             'spring': ['questions.md'],
-            'system-design': ['concepts.md', 'patterns.md'],
+            'system-design': ['api-design.md', 'scalability.md'],
             'testing': ['questions.md']
         };
     }
