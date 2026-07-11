@@ -1,55 +1,146 @@
-# 📚 Contents
+# 📚 Interview Preparation
 
-This repository is organized into different topics to help you prepare for technical interviews:
+A modern, production-ready documentation website for technical interview preparation. Built with modular JavaScript architecture following SOLID principles.
 
-- agile: Concepts and methodologies in Agile development
 
-- algorithms: Common algorithms with explanations and implementations
+![Interview Prep Website](https://img.shields.io/badge/Topics-29-blue) ![Files](https://img.shields.io/badge/Documents-73-green) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-- api: API design principles and best practices
+---
 
-- cloud: Cloud computing concepts and services (AWS, Azure, GCP)
+## ✨ Features
 
-- cryptography: Cryptographic techniques and protocols
+- 📁 **Auto-Discovery** - Add folders and files, they appear automatically
+- 🎨 **GitHub Theme** - Clean, professional dark/light mode
+- 🔍 **Smart Search** - Filter topics with `⌘K` shortcut
+- 📱 **Responsive** - Works on desktop and mobile
+- ⚡ **Fast** - Static site with markdown caching
 
-- data-structures: Essential data structures and their operations
+---
 
-- database: Database design, queries, and optimization techniques
+## 🚀 Quick Start
 
-- design-patterns: Common design patterns and their use cases
+### Local Development
 
-- devops: DevOps practices and CI/CD pipeline concepts
-
-# 🚀 How to Use
-
-Clone the repository:
-
+```bash
+# Clone the repo
 git clone https://github.com/thil4n/interview-preparation.git
 cd interview-preparation
 
-Explore the topic folders for resources, code samples, and explanations.
+# Start a local server (required for fetch API)
+python3 -m http.server 8080
 
-# 📌 Contributions
+# Open in browser
+open http://localhost:8080
+```
 
-Contributions are welcome! Feel free to open issues, submit pull requests, or suggest new topics to enhance this repository.
+---
 
-Fork the repository.
+## 📝 Adding New Topics
 
-Create a feature branch (git checkout -b feature/your-feature)
+### Step 1: Create a folder with markdown files
 
-Commit your changes (git commit -m 'Add your feature')
+```bash
+# Create a new topic folder
+mkdir kubernetes
 
-Push to the branch (git push origin feature/your-feature)
+# Add markdown files
+echo "# Kubernetes Basics
 
-Open a pull request.
+## What is Kubernetes?
+Kubernetes is a container orchestration platform...
 
-# 📄 License
+## Key Concepts
+- Pods
+- Services
+- Deployments
+" > kubernetes/basics.md
+```
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+### Step 2: Run the build script
 
-# 🤝 Acknowledgements
+```bash
+node scripts/build.js
+```
 
-Thanks to all contributors and the open-source community for sharing their knowledge.
+This auto-discovers all folders and generates `structure.json`.
 
-Happy coding and best of luck with your interviews! 🎯
+### Step 3: Commit and push
 
+```bash
+git add -A
+git commit -m "Add kubernetes topic"
+git push
+```
+
+GitHub Actions will automatically deploy your changes! 🎉
+
+---
+
+## 🌐 Deploying to GitHub Pages
+
+### First-time Setup
+
+1. Go to your repository on GitHub
+2. Click **Settings** → **Pages**
+3. Under "Build and deployment", set **Source** to **GitHub Actions**
+4. Wait ~1 minute for the first deployment
+
+### Automatic Deployment
+
+Every push to `main` branch triggers automatic deployment:
+
+1. GitHub Actions runs `scripts/build.js` to discover folders
+2. Uploads all files to GitHub Pages
+3. Site is live at `https://<username>.github.io/interview-preparation/`
+
+---
+
+## 🏗️ Project Architecture
+
+```
+interview-preparation/
+├── js/                    # Modular JavaScript (ES Modules)
+│   ├── config.js         # App configuration
+│   ├── state.js          # Pub/sub state management  
+│   ├── discovery.js      # Auto-discover folders
+│   ├── markdown.js       # Fetch & parse markdown
+│   ├── router.js         # Hash-based navigation
+│   ├── renderer.js       # DOM manipulation
+│   ├── app.js            # Application controller
+│   └── main.js           # Entry point
+├── scripts/
+│   └── build.js          # Auto-discovery build script
+├── .github/workflows/
+│   └── deploy.yml        # GitHub Actions deployment
+├── index.html            # Main HTML
+├── styles.css            # GitHub-inspired theme
+└── structure.json        # Auto-generated structure
+```
+
+---
+
+## 📂 Current Topics
+
+| Category | Topics |
+|----------|--------|
+| **Languages** | Java, JavaScript, Python, Ballerina |
+| **Frameworks** | Spring, React, Node |
+| **Data** | Database, Data Structures, Algorithms |
+| **System Design** | Microservices, Design Patterns, System Design |
+| **DevOps** | Cloud, Docker, Git, DevOps, Linux |
+| **Concepts** | OOP, Networking, Security, Cryptography |
+| **Interview** | HR, Agile, Testing, Soft Skills |
+
+---
+
+## 🛠️ Scripts
+
+| Command | Description |
+|---------|-------------|
+| `node scripts/build.js` | Discover folders and generate structure.json |
+
+---
+
+## 📄 License
+
+MIT License - feel free to use this for your own interview prep!

@@ -6,27 +6,29 @@ GraphQL is a query language for APIs and a runtime for executing those queries. 
 
 ## What are the core components of GraphQL?
 
-1.  Schema: Defines the structure and types of data available.
-2.  Query: Used to fetch data (equivalent to GET in REST).
-3.  Mutation: Used to modify data (Create, Update, Delete).
+ 1. **Schema**: Defines the structure and types of data available.
+ 2. **Query**: Used to fetch data (equivalent to GET in REST).
+ 3. **Mutation**: Used to modify data (Create, Update, Delete).
 
-4.  Subscription: Provides real-time updates.
-5.  Resolver: Functions that fetch the actual data for the queries and mutations. ---
+4. **Subscription**: Provides real-time updates.   
+5. **Resolver**: Functions that fetch the actual data for the queries and mutations.    --- 
 
-## How is GraphQL different from REST?
-
-| Feature        | GraphQL                         | REST                      |
-| -------------- | ------------------------------- | ------------------------- |
-| Data Fetching  | Request specific fields         | Fetch entire resources    |
-| Over-fetching  | No (only requested fields)      | Yes (fixed endpoint data) |
-| Under-fetching | No (nested queries allowed)     | Yes (multiple requests)   |
-| Versioning     | Not required                    | Requires new endpoints    |
-| Performance    | Single request for complex data | Multiple round-trips      |
-
-## What is a GraphQL schema?
-
-    A GraphQL schema is a blueprint that defines the types of data and operations (queries, mutations, subscriptions) supported by the API.  Example schema:
-
+ ## 3. How is GraphQL different from REST? 
+ 
+ | Feature         | GraphQL                      | REST                        | 
+ |-----------------|------------------------------|-----------------------------|
+  | Data Fetching   | Request specific fields      | Fetch entire resources      | 
+  | Over-fetching   | No (only requested fields)   | Yes (fixed endpoint data)   | 
+  | Under-fetching  | No (nested queries allowed)  | Yes (multiple requests)     | 
+  | Versioning      | Not required                 | Requires new endpoints      | 
+  | Performance     | Single request for complex data | Multiple round-trips       |  
+  --- 
+  
+  
+   ## 4. What is a GraphQL schema?
+   
+    A GraphQL schema is a blueprint that defines the types of data and operations (queries, mutations, subscriptions) supported by the API.  Example schema: 
+    
     ```graphql type User {   id: ID!   name: String!   email: String! }  type Query {   getUser(id: ID!): User }  type Mutation {   createUser(name: String!, email: String!): User }`
 
 ## what is a GraphQL query?

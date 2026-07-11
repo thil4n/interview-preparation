@@ -1,4 +1,4 @@
-# Explain time Complexity:
+# Explain time Complexity
 
 Time complexity refers to the amount of time an algorithm takes to complete as a function of the size of the input. It helps us understand how the running time of an algorithm grows as the input size increases. Time complexity is typically expressed in Big O notation (O(f(n))), where f(n) represents how the time of execution grows with respect to the input size n.
 

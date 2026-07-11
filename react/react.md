@@ -195,8 +195,6 @@ const MyInput = React.forwardRef((props, ref) => (
     `Recoil` is a state management library for React applications.
     It provides a way to manage shared state across components with better performance than Context API for large applications.
 
-Would you like me to include these in the LaTeX document or add any other specific types of questions?
-
 What is React Virtual Dom
 react stateless componet
 what is redux

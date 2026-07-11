@@ -30,8 +30,8 @@ This ensures data is not lost even if a broker fails.
 
 ## What is the difference between Kafka Consumer Group and Consumer?
 
--   Consumer: A client that reads messages from Kafka topics.
--   Consumer Group: A group of consumers where each message is consumed by only one consumer in the group, enabling parallel consumption.
+- Consumer: A client that reads messages from Kafka topics.
+- Consumer Group: A group of consumers where each message is consumed by only one consumer in the group, enabling parallel consumption.
 
 ## What is an offset in Kafka?
 
@@ -43,14 +43,14 @@ It allows consumers to track their position and resume reading from where they l
 Kafka’s retention policy determines how long messages are stored.
 It can be configured by:
 
--   Time-based: e.g., retain messages for 7 days.
--   Size-based: e.g., retain up to 100 GB of data.
+- Time-based: e.g., retain messages for 7 days.
+- Size-based: e.g., retain up to 100 GB of data.
 
 ## How does Kafka handle failure?
 
--   Replication: Messages are replicated across multiple brokers.
--   Leader Election: If a broker fails, Kafka promotes a replica to leader.
--   Consumer Offset Management: Allows consumers to resume processing after failures.
+- Replication: Messages are replicated across multiple brokers.
+- Leader Election: If a broker fails, Kafka promotes a replica to leader.
+- Consumer Offset Management: Allows consumers to resume processing after failures.
 
 ## What are the main APIs in Kafka?
 
