@@ -1,4 +1,5 @@
 import stateManager from './state.js';
+import Config from './config.js';
 
 class UIRenderer {
     constructor() {
@@ -20,18 +21,55 @@ class UIRenderer {
 
     renderSidebar() {
         const state = stateManager.getState();
-        const folders = Object.keys(state.folders).sort();
+        const query = state.searchQuery;
 
-        this.elements.sidebarNav.innerHTML = folders.map(folder => {
-            const files = state.folders[folder];
-            const filteredFiles = this.filterFiles(files, state.searchQuery);
+        // While searching, show a flat, filtered list (no category headers).
+        if (query) {
+            const html = Object.keys(state.folders).sort().map(folder => {
+                const filteredFiles = this.filterFiles(state.folders[folder], query);
+                if (filteredFiles.length === 0) return '';
+                return this.renderFolder(folder, state.folders[folder], filteredFiles, true);
+            }).join('');
 
-            if (state.searchQuery && filteredFiles.length === 0) return '';
+            this.elements.sidebarNav.innerHTML =
+                html || `<p class="nav-empty">No topics match "${this.escapeHtml(query)}"</p>`;
+            return;
+        }
 
-            const isOpen = state.currentFolder === folder || state.searchQuery.length > 0;
-            const displayFiles = state.searchQuery ? filteredFiles : files;
+        // Default: group folders into ordered categories.
+        const categories = Config.getCategorized(Object.keys(state.folders));
+
+        this.elements.sidebarNav.innerHTML = categories.map(category => {
+            const folders = category.folders.map(folder => {
+                const files = state.folders[folder];
+                const isOpen = state.currentFolder === folder;
+                return this.renderFolder(folder, files, files, isOpen);
+            }).join('');
 
             return `
+        <div class="nav-category">
+          <div class="nav-category-label">${category.name}</div>
+          ${folders}
+        </div>
+      `;
+        }).join('');
+    }
+
+    renderFolder(folder, allFiles, displayFiles, isOpen) {
+        const files = displayFiles.map(file => `
+          <a href="#/${folder}/${file}"
+             class="file-link ${stateManager.isFileActive(folder, file) ? 'active' : ''}"
+             data-folder="${folder}"
+             data-file="${file}">
+            <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span class="file-name">${this.formatFileName(file)}</span>
+          </a>
+        `).join('');
+
+        return `
         <div class="nav-folder">
           <div class="folder-header ${isOpen ? 'open' : ''}" data-folder="${folder}">
             <svg class="folder-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -41,25 +79,13 @@ class UIRenderer {
               <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
             </svg>
             <span class="folder-name">${this.formatFolderName(folder)}</span>
-            <span class="folder-count">${files.length}</span>
+            <span class="folder-count">${allFiles.length}</span>
           </div>
           <div class="folder-files ${isOpen ? 'open' : ''}">
-            ${displayFiles.map(file => `
-              <a href="#/${folder}/${file}" 
-                 class="file-link ${stateManager.isFileActive(folder, file) ? 'active' : ''}" 
-                 data-folder="${folder}" 
-                 data-file="${file}">
-                <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <span class="file-name">${this.formatFileName(file)}</span>
-              </a>
-            `).join('')}
+            ${files}
           </div>
         </div>
       `;
-        }).join('');
     }
 
     renderContent(html) {
@@ -96,8 +122,23 @@ class UIRenderer {
 
     renderWelcome() {
         const state = stateManager.getState();
-        const totalFolders = Object.keys(state.folders).length;
+        const folderKeys = Object.keys(state.folders);
+        const totalFolders = folderKeys.length;
         const totalFiles = Object.values(state.folders).reduce((sum, files) => sum + files.length, 0);
+        const categories = Config.getCategorized(folderKeys);
+
+        const categoryCards = categories.map(category => {
+            const docCount = category.folders.reduce((sum, f) => sum + state.folders[f].length, 0);
+            const firstFolder = category.folders[0];
+            const firstFile = state.folders[firstFolder][0];
+
+            return `
+        <a class="category-card" href="#/${firstFolder}/${firstFile}">
+          <span class="category-card-name">${category.name}</span>
+          <span class="category-card-meta">${category.folders.length} topics · ${docCount} docs</span>
+        </a>
+      `;
+        }).join('');
 
         this.elements.contentContainer.innerHTML = `
       <div class="welcome-screen">
@@ -107,9 +148,9 @@ class UIRenderer {
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
           </svg>
           <h1>Interview Preparation</h1>
-          <p class="welcome-subtitle">Your comprehensive knowledge base for acing technical interviews</p>
+          <p class="welcome-subtitle">A comprehensive knowledge base for acing technical interviews</p>
         </div>
-        
+
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-value">${totalFolders}</span>
@@ -119,13 +160,21 @@ class UIRenderer {
             <span class="stat-value">${totalFiles}</span>
             <span class="stat-label">Documents</span>
           </div>
+          <div class="stat-card">
+            <span class="stat-value">${categories.length}</span>
+            <span class="stat-label">Categories</span>
+          </div>
         </div>
-        
+
+        <div class="category-grid">
+          ${categoryCards}
+        </div>
+
         <p class="welcome-hint">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
-          Select a topic from the sidebar to start learning
+          Pick a category above, or search with <kbd>⌘K</kbd>
         </p>
       </div>
     `;

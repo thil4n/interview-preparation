@@ -15,6 +15,9 @@ class AppController {
         // Initialize renderer
         renderer.init();
 
+        // Apply saved theme (keeps state + DOM in sync with the pre-paint script)
+        this.loadSavedTheme();
+
         // Discover folders
         const folders = await folderDiscovery.discoverFolders();
         stateManager.setState({ folders });

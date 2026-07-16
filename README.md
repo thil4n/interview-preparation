@@ -1,70 +1,61 @@
 # 📚 Interview Preparation
 
-A modern, production-ready documentation website for technical interview preparation. Built with modular JavaScript architecture following SOLID principles.
+A clean, self-hosted documentation site for technical interview prep. Drop in markdown files, run one build step, and they show up automatically — organized, searchable, and readable in dark or light mode.
 
+![Topics](https://img.shields.io/badge/Topics-29-blue) ![Documents](https://img.shields.io/badge/Documents-71-green) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-![Interview Prep Website](https://img.shields.io/badge/Topics-29-blue) ![Files](https://img.shields.io/badge/Documents-73-green) ![License](https://img.shields.io/badge/License-MIT-yellow)
+> Originally built while preparing for software engineering interviews, and shared to help others do the same.
 
 ---
 
 ## ✨ Features
 
-- 📁 **Auto-Discovery** - Add folders and files, they appear automatically
-- 🎨 **GitHub Theme** - Clean, professional dark/light mode
-- 🔍 **Smart Search** - Filter topics with `⌘K` shortcut
-- 📱 **Responsive** - Works on desktop and mobile
-- ⚡ **Fast** - Static site with markdown caching
+- 📁 **Auto-discovery** — add a folder with markdown files, run the build, and it appears
+- 🗂️ **Grouped navigation** — topics are organized into categories in the sidebar
+- 🔍 **Instant search** — filter topics with the `⌘K` / `Ctrl+K` shortcut
+- 🎨 **Dark / light theme** — GitHub-inspired, remembers your choice
+- 📱 **Responsive** — works on desktop and mobile
+- ⚡ **Static & fast** — no framework, no bundler; markdown is fetched and cached client-side
 
 ---
 
 ## 🚀 Quick Start
 
-### Local Development
-
 ```bash
-# Clone the repo
 git clone https://github.com/thil4n/interview-preparation.git
 cd interview-preparation
 
-# Start a local server (required for fetch API)
+# A local server is required (the app fetches markdown via the Fetch API)
 python3 -m http.server 8080
 
-# Open in browser
-open http://localhost:8080
+# then open http://localhost:8080
 ```
+
+Opening `index.html` directly with `file://` will **not** work — browsers block `fetch` of local files. Always serve over HTTP.
 
 ---
 
 ## 📝 Adding New Topics
 
-### Step 1: Create a folder with markdown files
+**1. Create a folder with markdown files**
 
 ```bash
-# Create a new topic folder
 mkdir kubernetes
-
-# Add markdown files
 echo "# Kubernetes Basics
 
 ## What is Kubernetes?
-Kubernetes is a container orchestration platform...
-
-## Key Concepts
-- Pods
-- Services
-- Deployments
-" > kubernetes/basics.md
+A container orchestration platform..." > kubernetes/basics.md
 ```
 
-### Step 2: Run the build script
+**2. Regenerate the structure index**
 
 ```bash
 node scripts/build.js
 ```
 
-This auto-discovers all folders and generates `structure.json`.
+This scans every topic folder and rewrites `structure.json` — the single source of truth the site reads.
 
-### Step 3: Commit and push
+**3. Commit and push**
 
 ```bash
 git add -A
@@ -72,64 +63,69 @@ git commit -m "Add kubernetes topic"
 git push
 ```
 
-GitHub Actions will automatically deploy your changes! 🎉
+GitHub Actions rebuilds `structure.json` and redeploys automatically.
+
+> **Tip:** to place a new folder under a specific sidebar category, add its name to the matching group in [`js/config.js`](js/config.js). Unlisted folders still appear automatically under a **More** group.
+
+---
+
+## 🏗️ Architecture
+
+A small, dependency-light ES-module app. Content lives in topic folders at the repo root; the app shell lives in `js/`.
+
+```
+interview-preparation/
+├── index.html            # App shell (entry point)
+├── styles.css            # GitHub-inspired theme (dark/light)
+├── structure.json        # Auto-generated topic index (source of truth)
+├── js/
+│   ├── main.js           # Entry point
+│   ├── app.js            # Application controller + events
+│   ├── config.js         # Base path + sidebar category map
+│   ├── state.js          # Pub/sub state store
+│   ├── discovery.js      # Loads structure.json (with fallback)
+│   ├── markdown.js       # Fetch + parse + cache markdown
+│   ├── router.js         # Hash-based navigation (#/folder/file)
+│   └── renderer.js       # DOM rendering (sidebar, content, welcome)
+├── scripts/
+│   └── build.js          # Discovers folders → writes structure.json
+├── .github/workflows/
+│   └── deploy.yml         # GitHub Pages deployment
+└── <topic folders>/      # The actual content (java/, algorithms/, ...)
+```
+
+Third-party libraries ([marked](https://github.com/markedjs/marked) for markdown, [highlight.js](https://github.com/highlightjs/highlight.js) for code) are loaded from CDN with pinned versions.
 
 ---
 
 ## 🌐 Deploying to GitHub Pages
 
-### First-time Setup
+**First-time setup:** Repository → **Settings → Pages → Build and deployment**, set **Source** to **GitHub Actions**.
 
-1. Go to your repository on GitHub
-2. Click **Settings** → **Pages**
-3. Under "Build and deployment", set **Source** to **GitHub Actions**
-4. Wait ~1 minute for the first deployment
-
-### Automatic Deployment
-
-Every push to `main` branch triggers automatic deployment:
-
-1. GitHub Actions runs `scripts/build.js` to discover folders
-2. Uploads all files to GitHub Pages
-3. Site is live at `https://<username>.github.io/interview-preparation/`
+After that, every push to `main` runs `scripts/build.js` and publishes the site to
+`https://<username>.github.io/interview-preparation/`.
 
 ---
 
-## 🏗️ Project Architecture
-
-```
-interview-preparation/
-├── js/                    # Modular JavaScript (ES Modules)
-│   ├── config.js         # App configuration
-│   ├── state.js          # Pub/sub state management  
-│   ├── discovery.js      # Auto-discover folders
-│   ├── markdown.js       # Fetch & parse markdown
-│   ├── router.js         # Hash-based navigation
-│   ├── renderer.js       # DOM manipulation
-│   ├── app.js            # Application controller
-│   └── main.js           # Entry point
-├── scripts/
-│   └── build.js          # Auto-discovery build script
-├── .github/workflows/
-│   └── deploy.yml        # GitHub Actions deployment
-├── index.html            # Main HTML
-├── styles.css            # GitHub-inspired theme
-└── structure.json        # Auto-generated structure
-```
-
----
-
-## 📂 Current Topics
+## 📂 Topic Categories
 
 | Category | Topics |
 |----------|--------|
-| **Languages** | Java, JavaScript, Python, Ballerina |
-| **Frameworks** | Spring, React, Node |
-| **Data** | Database, Data Structures, Algorithms |
-| **System Design** | Microservices, Design Patterns, System Design |
-| **DevOps** | Cloud, Docker, Git, DevOps, Linux |
-| **Concepts** | OOP, Networking, Security, Cryptography |
-| **Interview** | HR, Agile, Testing, Soft Skills |
+| **Languages & Frameworks** | Java, JavaScript, Node, Python, React, Spring, Ballerina |
+| **Algorithms & Data** | Algorithms, Data Structures, Database |
+| **System Design** | System Design, Microservices, API, Design Patterns, Concurrency |
+| **DevOps & Cloud** | Cloud, DevOps, Git, Linux |
+| **CS Fundamentals** | OOP, Networking, Security, Cryptography, Machine Learning |
+| **Interview Prep** | Interview Questions, HR, Agile, Testing, Soft Skills |
+
+---
+
+## 🎯 Suggested Study Paths
+
+- **Backend / SWE** — OOP → Data Structures → Algorithms → Databases → System Design → Microservices
+- **Frontend** — JavaScript → React → Algorithms → OOP → frontend system design
+- **DevOps / SRE** — System Design → Cloud → DevOps → Networking → Security
+- **Everyone** — the **Interview Questions** bank collects real questions asked in past interviews; the **HR** and **Soft Skills** sections cover the behavioral round.
 
 ---
 
@@ -137,10 +133,10 @@ interview-preparation/
 
 | Command | Description |
 |---------|-------------|
-| `node scripts/build.js` | Discover folders and generate structure.json |
+| `node scripts/build.js` | Discover topic folders and regenerate `structure.json` |
 
 ---
 
 ## 📄 License
 
-MIT License - feel free to use this for your own interview prep!
+MIT — feel free to use this for your own interview prep and to contribute improvements.

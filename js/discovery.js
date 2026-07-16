@@ -4,11 +4,10 @@ class FolderDiscoveryService {
     constructor() {
         this.excludedFolders = new Set([
             '.git', '.github', '.vscode', 'node_modules',
-            'js', 'css', 'view', 'assets', 'dist', 'build'
+            'js', 'css', 'assets', 'dist', 'build', 'scripts'
         ]);
         this.excludedFiles = new Set([
-            'README.md', 'README-NEW.md', 'LICENSE.md', 'CHANGELOG.md',
-            'microservices.md', 'quiestions.md', 'soft-skills.md'
+            'README.md', 'README-NEW.md', 'LICENSE.md', 'CHANGELOG.md'
         ]);
     }
 
@@ -38,15 +37,16 @@ class FolderDiscoveryService {
             'algorithms': ['coding-problems.md', 'complexity.md', 'questions.md', 'recursion.md', 'sorting.md'],
             'api': ['concepts.md', 'graphql.md', 'kafka.md', 'rest.md', 'soap.md', 'streaming.md'],
             'ballerina': ['basics.md'],
-            'cloud': ['aws.md', 'concepts.md', 'docker.md'],
+            'cloud': ['aws.md', 'concepts.md'],
             'concurrency': ['multithreading.md'],
             'cryptography': ['concepts.md', 'rsa.md'],
             'data-structures': ['array.md', 'heap.md', 'stack.md'],
             'database': ['acid.md', 'concepts.md', 'indexing.md', 'normalization.md', 'nosql.md', 'scenario.md', 'sql.md'],
             'design-patterns': ['basics.md'],
-            'devops': ['cicd.md', 'docker.md', 'kubernates.md'],
-            'git': ['basics.md', 'commands.md', 'confilcts.md'],
+            'devops': ['cicd.md', 'docker.md', 'kubernetes.md'],
+            'git': ['basics.md', 'commands.md', 'conflicts.md'],
             'hr': ['questions.md'],
+            'interview-questions': ['questions.md'],
             'java': ['java-collections-advanced.md', 'java-collections.md', 'java-data-types.md', 'java-exceptions.md', 'java-keywords.md', 'java-oop.md', 'java-strings.md', 'java-threading.md'],
             'javascript': ['questions.md'],
             'linux': ['questions.md'],
@@ -56,10 +56,9 @@ class FolderDiscoveryService {
             'node': ['questions.md'],
             'oop': ['abstraction.md', 'basics.md', 'encapsulation.md', 'inheritance.md', 'polymorphism.md'],
             'python': ['basics.md', 'oop.md'],
-            'questions': ['questions.md'],
-            'react': ['interview-guide.md', 'quiestions.md', 'react.md'],
+            'react': ['interview-guide.md', 'react.md'],
             'security': ['network-security.md', 'penetration-testing.md'],
-            'soft-skill': ['soft-skills.md'],
+            'soft-skills': ['soft-skills.md'],
             'spring': ['questions.md'],
             'system-design': ['api-design.md', 'scalability.md'],
             'testing': ['questions.md']

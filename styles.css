@@ -931,3 +931,152 @@ body {
     font-size: 1.35em;
   }
 }
+
+/* ============================================
+   Refinements & New Components
+   ============================================ */
+
+/* Sidebar logo: subtle gradient badge */
+.sidebar-logo-icon {
+  background: linear-gradient(135deg, var(--color-accent-emphasis), #388bfd);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.sidebar-logo h1 {
+  letter-spacing: -0.01em;
+}
+
+/* Sidebar category grouping */
+.nav-category {
+  margin-bottom: 12px;
+}
+
+.nav-category-label {
+  padding: 6px 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.nav-empty {
+  padding: 16px 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Active file link: accent bar for stronger affordance */
+.file-link {
+  position: relative;
+}
+
+.file-link.active {
+  font-weight: 500;
+}
+
+.file-link.active::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--color-accent-fg);
+}
+
+/* Header: left cluster + sticky backdrop */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.content-header {
+  backdrop-filter: saturate(180%) blur(8px);
+  background: color-mix(in srgb, var(--color-canvas-default) 82%, transparent);
+}
+
+.breadcrumb-folder,
+.breadcrumb-file {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Theme toggle: show the icon for the theme you'll switch TO */
+.theme-icon {
+  width: 16px;
+  height: 16px;
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon-sun {
+  display: block;
+}
+
+[data-theme="light"] .theme-icon-moon {
+  display: block;
+}
+
+/* Welcome: category landing grid */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 32px;
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  text-align: left;
+  text-decoration: none;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--border-radius-lg);
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.category-card:hover {
+  border-color: var(--color-accent-muted);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.category-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.category-card-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Inline keyboard hint */
+kbd {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 480px) {
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+}

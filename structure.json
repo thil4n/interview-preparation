@@ -22,8 +22,7 @@
   ],
   "cloud": [
     "aws.md",
-    "concepts.md",
-    "docker.md"
+    "concepts.md"
   ],
   "concurrency": [
     "multithreading.md"
@@ -52,14 +51,17 @@
   "devops": [
     "cicd.md",
     "docker.md",
-    "kubernates.md"
+    "kubernetes.md"
   ],
   "git": [
     "basics.md",
     "commands.md",
-    "confilcts.md"
+    "conflicts.md"
   ],
   "hr": [
+    "questions.md"
+  ],
+  "interview-questions": [
     "questions.md"
   ],
   "java": [
@@ -105,19 +107,15 @@
     "basics.md",
     "oop.md"
   ],
-  "questions": [
-    "questions.md"
-  ],
   "react": [
     "interview-guide.md",
-    "quiestions.md",
     "react.md"
   ],
   "security": [
     "network-security.md",
     "penetration-testing.md"
   ],
-  "soft-skill": [
+  "soft-skills": [
     "soft-skills.md"
   ],
   "spring": [
