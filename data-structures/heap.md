@@ -169,6 +169,4 @@ A: When elements arrive incrementally and you repeatedly need the current min/ma
 
 ## Related
 
-- [Trees](trees.md) - heaps are a specialized, array-backed complete binary tree
-- [Sorting Algorithms](sorting.md) - heap sort compared against quicksort and merge sort
-- [Graphs](graphs.md) - priority queues built on heaps drive Dijkstra's and Prim's algorithms
+- [Sorting Algorithms](../algorithms/sorting.md) - heap sort compared against quicksort and merge sort

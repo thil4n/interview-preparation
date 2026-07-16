@@ -135,6 +135,6 @@ A: Yes. A single service can be attached to multiple listeners, and Ballerina sh
 
 ## Related
 
-- [error-handling.md](error-handling.md) - deeper dive into error types, `trap`, and failure-handling patterns
-- [concurrency.md](concurrency.md) - strands, workers, and asynchronous invocation in depth
-- [rest-api-design.md](rest-api-design.md) - designing the HTTP contracts Ballerina services expose
+- [error-handling.md](../java/java-exceptions.md) - deeper dive into error types, `trap`, and failure-handling patterns
+- [concurrency.md](../concurrency/multithreading.md) - strands, workers, and asynchronous invocation in depth
+- [rest-api-design.md](../api/rest.md) - designing the HTTP contracts Ballerina services expose

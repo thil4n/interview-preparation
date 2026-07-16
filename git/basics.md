@@ -111,6 +111,4 @@ A: Not directly for tracked-file edits, though `git commit -a` will automaticall
 
 ## Related
 
-- [Branching and Merging](branching.md) - how commit history diverges and reconverges across branches
-- [Rebase vs Merge](rebase.md) - two strategies for integrating changes, with different history implications
-- [Resolving Merge Conflicts](merge-conflicts.md) - what happens when `pull` or `merge` cannot auto-combine changes
+- [Resolving Merge Conflicts](conflicts.md) - what happens when `pull` or `merge` cannot auto-combine changes

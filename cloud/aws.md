@@ -1,209 +1,136 @@
-# What is Amazon EC2 and what are its features?
+# Amazon Web Services (AWS)
 
-Amazon EC2 (Elastic Compute Cloud) is a web service that provides resizable compute capacity in the cloud. It allows you to launch and manage virtual servers known as instances. Key features include:
+> **AWS** is Amazon's cloud platform, offering on-demand compute, storage, database, networking, and other infrastructure services that you provision programmatically and pay for based on usage.
 
-- Scalability (auto scaling groups)
-- Different instance types for various workloads
-- Security groups and key pairs
-- Elastic IP addresses
-- Pay-as-you-go pricing
+## Why it matters
 
-# What is the difference between S3 and EBS?
+AWS is the market-leading cloud provider, so interviewers use it as a proxy for whether you can design and operate real systems, not just write application code. Questions probe whether you know which service fits which job (SQS vs SNS, RDS vs DynamoDB, ALB vs NLB), how the shared responsibility model splits duties, and whether you can reason about scaling, availability, and security with AWS building blocks.
 
-S3 (Simple Storage Service) is an object storage service for storing and retrieving any amount of data, typically used for backups, static website hosting, and big data analytics.
+## Services Overview
 
-EBS (Elastic Block Store) is block-level storage designed for use with EC2 instances. It behaves like a hard drive and is suitable for databases and applications that require persistent storage.
+| Category | Service | Purpose |
+|---|---|---|
+| Compute | EC2 | Resizable virtual machines (instances) |
+| Compute | Lambda | Serverless, event-driven functions |
+| Compute | EKS | Managed Kubernetes control plane |
+| Compute | Elastic Beanstalk | PaaS for quick app deployment |
+| Storage | S3 | Object storage (files, backups, static sites) |
+| Storage | EBS | Block storage attached to EC2 instances |
+| Database | RDS | Managed relational databases (Aurora, MySQL, PostgreSQL, MariaDB, Oracle, SQL Server) |
+| Database | DynamoDB | Managed NoSQL key-value/document database |
+| Networking | VPC | Isolated virtual network for your resources |
+| Networking | ELB (ALB/NLB/GLB) | Load balancing across instances/targets |
+| Networking | Route 53 | DNS and domain routing |
+| Networking | CloudFront | CDN for low-latency content delivery |
+| Messaging | SQS | Message queuing to decouple services |
+| Messaging | SNS | Pub/sub notifications |
+| Security | IAM | Identity, access, and permissions management |
+| Security | KMS | Encryption key management |
+| Governance | CloudFormation | Infrastructure as Code |
+| Governance | AWS Config | Resource configuration tracking and compliance |
 
-# What are Security Groups in AWS?
+## Compute: EC2, Lambda, EKS
 
-Security Groups act as virtual firewalls for EC2 instances to control inbound and outbound traffic. Rules can be defined based on:
+Amazon **EC2** provides resizable virtual servers ("instances") sized by CPU/memory/network profile. Key features: Auto Scaling groups that add/remove instances based on demand, security groups and key pairs for access control, Elastic IPs for static addresses, and pay-as-you-go pricing (with reserved/spot options for savings).
 
-- IP protocols (TCP, UDP, ICMP)
+**AWS Lambda** is serverless compute: you upload code and AWS runs it in response to events (API Gateway requests, S3 uploads, queue messages) without you managing servers. It scales automatically, bills per invocation/duration, and supports multiple runtimes (Python, Node.js, Java, and others) - cost-effective for spiky or infrequent workloads.
 
-- Port ranges
+**Amazon EKS** is a managed Kubernetes service - AWS runs the control plane so you don't have to. It integrates with VPC networking, IAM, and CloudWatch, and spans multiple Availability Zones for high availability.
 
-- Source/Destination IPs
+**Auto Scaling** uses launch templates, scaling policies (target tracking, step, or scheduled), and health checks that replace unhealthy instances automatically. **Lifecycle hooks** pause an instance's launch/termination to run custom actions, such as triggering a Lambda function or SNS notification before the transition completes.
 
-They are stateful, meaning if you allow an incoming request, the response is automatically allowed.
+## Storage: S3 vs EBS
 
-# What is IAM and why is it important?
+| Aspect | S3 | EBS |
+|---|---|---|
+| Type | Object storage | Block storage |
+| Access | Over HTTP(S) via API/SDK | Attached to a single EC2 instance |
+| Use case | Backups, static sites, big data, logs | Databases, OS/application disks |
+| Durability model | Designed for very high durability across multiple AZs | Tied to a single Availability Zone |
+| Scaling | Virtually unlimited, no provisioning | Provisioned size/IOPS per volume |
 
-IAM (Identity and Access Management) allows you to control access to AWS resources securely. It enables:
+S3 stores objects (files) addressed by key within a bucket - ideal for anything that doesn't need a traditional filesystem. EBS behaves like an attached hard drive for an EC2 instance and suits applications (like databases) needing low-latency, persistent block storage.
 
-- Creating users, groups, and roles
+## Database: RDS vs DynamoDB
 
-- Assigning fine-grained permissions using policies
+**RDS** is a managed relational database service supporting engines like Aurora, MySQL, PostgreSQL, MariaDB, Oracle, and SQL Server. AWS automates backups, patching, monitoring, and replication, but you still own schema design and query performance.
 
-- Using multi-factor authentication
+**DynamoDB** is a managed NoSQL key-value/document database built for single-digit-millisecond latency at virtually any scale, with pay-per-request or provisioned-throughput pricing. Choose RDS for relational integrity, joins, and multi-table transactions; choose DynamoDB for predictable low-latency access at massive scale with simpler access patterns.
 
-- Enforcing least privilege principles
+## Networking: VPC, Load Balancers, Route 53, CloudFront
 
-# What are the different types of load balancers in AWS?
+A **VPC** is your own isolated network within AWS, divided into subnets. A **public subnet** has a route to the internet via an Internet Gateway (used for load balancers or bastion hosts); a **private subnet** has no direct internet route (used for databases and internal services, reached only from within the VPC or via a NAT gateway for outbound access).
 
-AWS offers three types of load balancers via the Elastic Load Balancing (ELB) service:
+**Security groups** act as stateful virtual firewalls attached to instances, controlling inbound/outbound traffic by protocol, port, and source/destination - because they're stateful, a response to an allowed inbound request is automatically permitted outbound.
 
-- Application Load Balancer (ALB): Operates at Layer 7 (HTTP/HTTPS), supports advanced routing.
+AWS's Elastic Load Balancing offers three types: **Application Load Balancer (ALB)** - Layer 7 (HTTP/HTTPS), path/host-based routing; **Network Load Balancer (NLB)** - Layer 4 (TCP/UDP), high throughput and low latency; **Gateway Load Balancer (GLB)** - for deploying and scaling third-party virtual appliances.
 
-- Network Load Balancer (NLB): Operates at Layer 4 (TCP), suitable for high performance and low latency.
+**Route 53** is AWS's DNS and domain registration service, supporting routing policies (simple, weighted, latency-based, failover, geolocation, multi-value) and health checks. **CloudFront** is AWS's CDN, caching content at edge locations worldwide, integrating with S3/EC2 origins plus AWS WAF and Shield for protection.
 
-- Gateway Load Balancer (GLB): For deploying, scaling, and running third-party virtual appliances.
+## Messaging: SQS and SNS
 
-# How does Auto Scaling work in AWS?
+**SQS** is a managed message queue used to decouple producers and consumers. It offers standard queues (at-least-once delivery, best-effort ordering) and FIFO queues (exactly-once processing, strict order), plus dead-letter queues and visibility timeouts.
 
-Auto Scaling automatically adjusts the number of EC2 instances in a group based on conditions you define (e.g., CPU usage, memory, custom metrics). It includes:
+**SNS** is a pub/sub messaging service that fans out a single published message to multiple subscribers - email, SMS, Lambda, or SQS - a common building block for event-driven architectures.
 
-Launch configurations or launch templates
+## Security: IAM and the Shared Responsibility Model
 
-Scaling policies (target tracking, step scaling, scheduled)
+**IAM** controls who can do what in an AWS account: creating users, groups, and roles, attaching fine-grained policies, enforcing multi-factor authentication, and applying least-privilege access. Data protection typically combines SSL/TLS **in transit** and KMS-managed encryption **at rest** (for S3, EBS, RDS, DynamoDB).
 
-Health checks to replace unhealthy instances
+The **Shared Responsibility Model** splits security duties: AWS secures *of* the cloud (hardware, software, networking, facilities); the customer secures *in* the cloud (data, IAM configuration, network controls, application security).
 
-# What is an AWS Lambda function?
+## Infrastructure as Code and Governance
 
-AWS Lambda is a serverless compute service that runs your code in response to events (e.g., HTTP requests, S3 uploads). It:
+**CloudFormation** defines AWS resources declaratively in JSON/YAML templates, enabling version-controlled, repeatable, dependency-aware deployments (including reusable nested stacks). **Elastic Beanstalk** is a higher-level PaaS that deploys apps into pre-configured environments quickly, trading control for simplicity; CloudFormation gives full, low-level control instead.
 
-- Automatically manages compute resources
+**AWS Config** continuously records and evaluates resource configuration, giving a change history, a current-state snapshot, and rule-based compliance auditing - useful across multi-account setups managed with AWS Organizations.
 
-- Scales automatically
+## Typical Web Application Architecture
 
-- Supports multiple languages like Python, Node.js, Java, etc.
+A common pattern for a scalable, resilient web app on AWS combines several of the services above:
 
-- Is event-driven and cost-effective (pay per invocation)
+```mermaid
+flowchart TD
+    User["User<br/>(Browser)"] --> DNS["Route 53<br/>(DNS)"]
+    DNS --> CDN["CloudFront<br/>(CDN)"]
+    CDN --> ALB["Application<br/>Load Balancer"]
+    ALB --> EC2A["EC2 Instance<br/>(AZ-A)"]
+    ALB --> EC2B["EC2 Instance<br/>(AZ-B)"]
+    EC2A --> Cache["ElastiCache<br/>(optional)"]
+    EC2B --> Cache
+    EC2A --> DB["RDS<br/>(Multi-AZ)"]
+    EC2B --> DB
+    EC2A --> Queue["SQS Queue"]
+    Queue --> Worker["Lambda /<br/>Worker Fleet"]
+    Worker --> DB
+    CDN --> S3["S3<br/>(Static Assets)"]
+```
 
-# What is the difference between Public and Private subnets in a VPC?
+The request flow: Route 53 resolves the domain, CloudFront caches and serves static assets from S3 at the edge, and dynamic requests pass through the ALB to EC2 instances spread across Availability Zones for fault tolerance. Instances read/write to a Multi-AZ RDS database, offload background work via SQS to Lambda or a worker fleet, and everything sits inside a VPC with security groups restricting traffic between tiers.
 
-Public Subnet: Has a route to the internet via an Internet Gateway (IGW). Resources here can be accessed from the internet.
+## Common Interview Questions
 
-Private Subnet: No direct route to the internet. Typically used for databases or internal services.
+**Q: What's the difference between S3 and EBS?**
+A: S3 is object storage over HTTP(S), ideal for files, backups, and static content at virtually unlimited scale. EBS is block storage attached to one EC2 instance in one Availability Zone, used for OS disks and databases needing low-latency block access.
 
-# What is Route 53 and what are its routing policies?
+**Q: When would you choose DynamoDB over RDS?**
+A: Choose DynamoDB for predictable, single-digit-millisecond latency at massive scale with simple key-based access and no need for joins or complex transactions. Choose RDS for relational integrity, complex queries, and multi-table transactions.
 
-Route 53 is AWS’s scalable DNS and domain name registration service. It supports:
+**Q: What's the difference between security groups and NACLs?**
+A: Security groups are stateful and operate at the instance level, allowing return traffic automatically. NACLs are stateless and operate at the subnet level, so both inbound and outbound rules must be defined explicitly.
 
-Routing policies: Simple, Weighted, Latency-based, Failover, Geo-location, Multi-value answer
+**Q: How does Auto Scaling decide when to add or remove instances?**
+A: Through scaling policies - target tracking (e.g., keep average CPU at 50%), step scaling (add capacity in increments based on alarm thresholds), or scheduled scaling - combined with health checks that replace unhealthy instances.
 
-Health checks
+**Q: What is the Shared Responsibility Model?**
+A: AWS secures the underlying infrastructure - hardware, hypervisor, networking, facilities. The customer is responsible for security in the cloud: data encryption, IAM policies, network configuration, and application security.
 
-Domain name registration
+**Q: Why would you use SQS with SNS together?**
+A: SNS fans out one event to multiple subscribers, and each subscriber can be an SQS queue so every consumer gets its own durable, independently processed copy - a common fan-out pattern for event-driven architectures.
 
-DNS management for public and private hosted zones
+**Q: What's the difference between Elastic Beanstalk and CloudFormation?**
+A: Elastic Beanstalk is an opinionated PaaS that provisions a ready-made environment (load balancer, instances, scaling) quickly. CloudFormation is a lower-level IaC service where you define every resource explicitly, trading setup effort for control.
 
-# How do you secure data in transit and at rest in AWS?
+## Related
 
-- In transit: Use SSL/TLS encryption for data moving between services or users and AWS.
-
-- At rest: Use services like KMS to encrypt data stored in S3, EBS, RDS, and DynamoDB.
-
-# What is Amazon RDS and what databases does it support?
-
-Amazon RDS (Relational Database Service) is a managed service that makes it easier to set up, operate, and scale relational databases in the cloud. It supports:
-
-Amazon Aurora
-
-MySQL
-
-PostgreSQL
-
-MariaDB
-
-Oracle
-
-Microsoft SQL Server
-
-RDS automates tasks like backups, patching, monitoring, and replication.
-
-# What is Amazon CloudFront?
-
-CloudFront is AWS’s content delivery network (CDN) that delivers content with low latency and high transfer speed. It:
-
-Uses edge locations globally
-
-Supports static and dynamic content
-
-Integrates with services like S3 and EC2
-
-Provides HTTPS and custom SSL support
-
-Works with AWS WAF and Shield for security
-
-# What is AWS CloudFormation?
-
-CloudFormation is an Infrastructure as Code (IaC) service that lets you define and provision AWS resources using JSON or YAML templates. It allows:
-
-Version-controlled infrastructure
-
-Automated deployments
-
-Dependency management
-
-Reusability of templates using nested stacks
-
-# What is the difference between Elastic Beanstalk and CloudFormation?
-
-Elastic Beanstalk: A Platform-as-a-Service (PaaS) for deploying applications quickly using pre-configured environments.
-
-CloudFormation: A low-level service for defining AWS infrastructure precisely and flexibly via code.
-
-Elastic Beanstalk is opinionated and simpler, while CloudFormation gives full control over infrastructure.
-
-# What is the Shared Responsibility Model in AWS?
-
-In AWS’s Shared Responsibility Model:
-
-AWS is responsible for: Security of the cloud (hardware, software, networking, facilities).
-
-Customers are responsible for: Security in the cloud (data, IAM policies, configurations, applications).
-
-# What is Amazon EKS?
-
-Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service that allows you to run Kubernetes without having to install and operate your own control plane or nodes. Features:
-
-Integration with VPC, IAM, CloudWatch
-
-High availability across AZs
-
-Secure and scalable Kubernetes clusters
-
-# What are Lifecycle Hooks in Auto Scaling?
-
-Lifecycle Hooks allow you to perform custom actions before an instance transitions from one state to another (e.g., before termination or after launching). You can:
-
-Pause the transition
-
-Trigger a Lambda function or send an SNS message
-
-Perform cleanup or initialization tasks
-
-# What is Amazon SNS and how is it used?
-
-Amazon Simple Notification Service (SNS) is a fully managed pub/sub messaging service. It allows you to:
-
-Send notifications to multiple subscribers (email, SMS, Lambda, SQS)
-
-Build event-driven architectures
-
-Integrate with monitoring, alerting, and workflows
-
-# What is Amazon SQS?
-
-Amazon Simple Queue Service (SQS) is a fully managed message queuing service. It helps decouple microservices or distributed systems. It supports:
-
-Standard queues (best-effort ordering, at-least-once delivery)
-
-FIFO queues (exactly-once processing and order)
-
-Dead-letter queues
-
-Visibility timeouts and message delays
-
-# What is the use of AWS Config?
-
-AWS Config is a service that enables you to assess, audit, and evaluate the configurations of AWS resources. It provides:
-
-Resource configuration history
-
-Snapshot view of current configuration
-
-Rule-based compliance auditing
-
-Integration with AWS Organizations for multi-account setup
+- [Cloud Computing Concepts](concepts.md) - service models (IaaS/PaaS/SaaS) and shared responsibility background

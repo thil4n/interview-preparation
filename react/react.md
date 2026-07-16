@@ -1,220 +1,160 @@
-1. What is React?
+# React
 
-React is a JavaScript library developed by Facebook for building user interfaces, especially single-page applications.
-It allows developers to create reusable UI components and manage the state of those components efficiently.
+> **React** is a JavaScript library for building user interfaces out of small, reusable **components** that describe what the UI should look like for a given state.
 
-2. What are the main features of React?
+## Why it matters
+React questions test whether a candidate understands more than JSX syntax: how rendering actually works, why keys and immutability matter, and when to reach for state vs. props vs. context. Interviewers use it as a proxy for general front-end reasoning - performance trade-offs, data flow, and lifecycle timing - because most teams build on React or a component model like it.
 
-Virtual DOM: Optimizes rendering by updating only the parts of the DOM that have changed.
-Component-Based Architecture: Encourages reusable UI components.
-Unidirectional Data Flow: Makes code predictable and easier to debug.
-JSX: A syntax extension that allows mixing HTML with JavaScript.
+## Components: Function vs Class
 
-3. What is JSX?
+A component is a JavaScript function (or class) that returns JSX describing part of the UI. Modern React code is almost entirely function components plus hooks; class components are legacy but still show up in older codebases and interview questions.
 
-JSX stands for JavaScript XML. It is a syntax extension for JavaScript, allowing developers to write HTML-like code within JavaScript.
-React converts JSX into JavaScript during the build process.
+```jsx
+// Function component (modern)
+function Greeting({ name }) {
+  return <h1>Hello, {name}!</h1>;
+}
 
-4. What is the Virtual DOM?
+// Class component (legacy)
+class Greeting extends React.Component {
+  render() {
+    return <h1>Hello, {this.props.name}!</h1>;
+  }
+}
+```
 
-The Virtual DOM is a lightweight representation of the real DOM. React keeps a Virtual DOM in memory,
-compares it with the previous version (diffing), and updates only the changed parts in the real DOM, improving performance.
+| Aspect | Function Component | Class Component |
+|---|---|---|
+| State | `useState` / `useReducer` hooks | `this.state` + `this.setState` |
+| Side effects | `useEffect` | Lifecycle methods (`componentDidMount`, etc.) |
+| `this` binding | Not needed | Required for methods, common bug source |
+| Code reuse | Custom hooks | Higher-order components / render props |
+| Error boundaries | Not possible (no hook equivalent) | `componentDidCatch` / `getDerivedStateFromError` |
+| Current recommendation | Preferred | Legacy, mainly for error boundaries |
 
-5. Explain the difference between a class component and a functional component.
+## Props vs State
 
-Class Component: Requires `extends React.Component`. Can use lifecycle methods and `state`.
-Functional Component: A plain JavaScript function that returns JSX. With React Hooks,
-functional components can now manage state and use lifecycle features.
+Props and state are the two sources of data that drive what a component renders, but they differ in ownership and mutability.
 
-6. What are React Hooks?
+| | Props | State |
+|---|---|---|
+| Owned by | Parent component | The component itself |
+| Mutability | Read-only (immutable) inside the receiving component | Mutable via `setState` / the hook's setter |
+| Direction of flow | Passed down, top to bottom | Local, can be lifted up if shared |
+| Triggers re-render? | Yes, when the value changes | Yes, when updated |
 
-React Hooks are functions that let you use state and other React features in functional components. Common hooks include:
-`useState`: For state management.
-`useEffect`: For side effects (similar to lifecycle methods like `componentDidMount`).
-`useContext`: For accessing context.
-`useRef`: For accessing DOM elements or persisting mutable values.
+React's data flow is unidirectional: state lives in some component, and is passed down as props to children. When a child needs to affect data owned by an ancestor, the ancestor passes a callback down as a prop ("lifting state up").
 
-7. What is the difference between `state` and `props`?
-   Props: Used to pass data from a parent component to a child component. They are immutable.
-   State: Managed within the component. It is mutable and determines the component's behavior and rendering.
+## Hooks
 
-8. What is the purpose of `useEffect`?
+Hooks let function components use state and other React features without writing a class. A few rules apply to all hooks: call them only at the top level of a component (never inside loops/conditions), and only from React functions.
 
-`useEffect` is used to handle side effects in functional components, such as data fetching,
-subscriptions, or manually manipulating the DOM.
-It can mimic lifecycle methods like `componentDidMount`, `componentDidUpdate`, and `componentWillUnmount`.
+**useState** - local, synchronous-looking state for a single render:
 
-9. How does React handle form inputs?
+```jsx
+const [count, setCount] = useState(0);
+```
 
-React handles form inputs using controlled or uncontrolled components:
-Controlled Components: The form element's value is controlled by React state.
-Uncontrolled Components: The form element's value is controlled by the DOM itself using `ref`.
+**useEffect** - runs side effects (data fetching, subscriptions, manual DOM work) after render, and can clean up before the next run or on unmount:
 
-10. What is `React.memo`?
-    `React.memo` is a higher-order component used to optimize functional components by preventing unnecessary re-renders.
-    It performs a shallow comparison of props and re-renders the component only if the props have changed.
+```jsx
+useEffect(() => {
+  const id = setInterval(() => setCount(c => c + 1), 1000);
+  return () => clearInterval(id); // cleanup
+}, []); // dependency array: [] = run once on mount
+```
 
-11. What is the difference between `Context API` and `Redux`?
+The dependency array controls when the effect re-runs: omitted means every render, `[]` means once on mount, `[dep]` means whenever `dep` changes.
 
-Context API: A built-in React feature for managing state globally. It is simpler but better suited for less complex applications.
-Redux: A state management library with a more complex but powerful architecture.
-It is suited for large-scale applications with complex state logic.
+**useContext** - reads a value from the nearest `Context.Provider` above, avoiding prop drilling through many layers:
 
-12. What is the purpose of `useReducer`? How does it differ from `useState`?
+```jsx
+const ThemeContext = React.createContext('light');
 
-    `useReducer` is an alternative to `useState` for managing complex state logic.
-    It accepts a reducer function and an initial state and returns the current state and a dispatch function.
-    It is similar to Redux but works locally within a component.
+function Toolbar() {
+  const theme = useContext(ThemeContext);
+  return <div className={theme}>...</div>;
+}
+```
 
-13. What are Higher-Order Components (HOCs)?
+## The Virtual DOM and Reconciliation
 
-    HOCs are functions that take a component as an argument and return a new component.
-    They are used to add functionality to existing components.
-    Common use cases include authentication checks and conditional rendering.
+The virtual DOM is a lightweight, in-memory tree of plain JavaScript objects that mirrors the real DOM. On every state or prop change, React builds a new virtual DOM tree, diffs it against the previous tree (the "diffing algorithm"), and computes the minimal set of real DOM mutations needed - this whole process is called **reconciliation**. Because real DOM writes are expensive and JS object comparisons are cheap, this batching of updates is what makes React fast.
 
-14. What is the purpose of React Portals?
+```mermaid
+flowchart TD
+    A["State or prop change"] --> B["Render phase:<br/>build new virtual DOM tree"]
+    B --> C["Diff against previous<br/>virtual DOM tree"]
+    C --> D{"Elements of<br/>same type at<br/>same position?"}
+    D -->|Yes| E["Update existing<br/>DOM node's attributes"]
+    D -->|No| F["Unmount old node,<br/>mount new node"]
+    E --> G["Commit phase:<br/>apply minimal patch<br/>to real DOM"]
+    F --> G
+    G --> H["Browser paints<br/>updated UI"]
+```
 
-    React Portals allow you to render children into a DOM node that exists outside the DOM hierarchy of the parent component.
-    They are useful for rendering modals, tooltips, and other UI elements that need to break out of their parent container.
+React's diffing uses two heuristics to stay fast (O(n) instead of the theoretical O(n^3) for generic tree diffs): elements of different types produce entirely different trees, and list items are matched using the `key` prop rather than by position.
 
-15. How does React handle error boundaries?
-    Error boundaries are React components that catch JavaScript errors in their child component tree and log those errors, providing a fallback UI.
-    They are created by implementing `componentDidCatch` and `getDerivedStateFromError`.
+## Keys
 
-16. What is lazy loading in React?
+`key` is a special prop React uses to identify which items in a list have been added, removed, or reordered between renders. Without stable keys, React falls back to comparing by index, which can cause state to attach to the wrong element or force unnecessary DOM rebuilds when a list is reordered.
 
-    Lazy loading in React refers to loading components or assets only when they are required.
-    This improves the performance and initial loading time of the application.
-    React provides `React.lazy` and `Suspense` to implement lazy loading.
+```jsx
+{items.map(item => (
+  <ListItem key={item.id} data={item} />
+))}
+```
 
-17. How do you optimize React application performance?
+Rules of thumb: keys must be unique among siblings (not globally), and should come from stable data like a database ID - never from array index if the list can be reordered, filtered, or have items inserted.
 
-    Use `React.memo` for functional components.
-    Use `useCallback` and `useMemo` to memoize functions and values.
-    Avoid unnecessary re-renders by lifting state up or using context wisely.
-    Code-splitting and lazy loading for components.
-    Use production build for deployment.
+## Lifecycle
 
-18. What is the purpose of `reconciliation` in React?
-    Reconciliation is the process by which React updates the DOM by comparing the current Virtual
-    DOM with the previous version and determining the minimum number of changes required.
+Class components expose explicit lifecycle methods; function components achieve the same timing through `useEffect` and its dependency array.
 
-19. What is React Router?
+```mermaid
+flowchart LR
+    subgraph Mounting
+        A1["constructor"] --> A2["render"] --> A3["componentDidMount"]
+    end
+    subgraph Updating
+        B1["render"] --> B2["componentDidUpdate"]
+    end
+    subgraph Unmounting
+        C1["componentWillUnmount"]
+    end
+    A3 -.props/state change.-> B1
+    B2 -.component removed.-> C1
+```
 
-    React Router is a standard library for routing in React.
-    It allows navigation between different components or pages in a single-page application.
-    Key components include `BrowserRouter`, `Route`, `Switch`, `Link`, and `NavLink`.
+| Phase | Class method | Function component equivalent |
+|---|---|---|
+| Mount | `componentDidMount` | `useEffect(fn, [])` |
+| Update | `componentDidUpdate` | `useEffect(fn, [deps])` |
+| Unmount | `componentWillUnmount` | cleanup function returned from `useEffect` |
+| Catch errors | `componentDidCatch`, `getDerivedStateFromError` | No hook equivalent - still requires a class-based error boundary |
 
-20. What is the role of `react-query` or `TanStack Query`?
-    `react-query` is a powerful data-fetching library for managing server-side state in React applications.
-    It simplifies data fetching, caching, and synchronization with the server,
-    providing features like automatic retries, pagination, and background data updates.
+## Common Interview Questions
 
-21. What is the difference between `findDOMNode` and `ref`?  
-    `findDOMNode`: A legacy method used to get the DOM node associated with a component. It is discouraged in React 16+.
-    `ref`: The modern way to directly access a DOM node or React element. Created using `React.createRef` or `useRef`.
+**Q: What is the difference between the virtual DOM and the real DOM?**
+A: The real DOM is the browser's actual rendered document; manipulating it directly is slow because it triggers layout and paint. The virtual DOM is an in-memory JS representation React diffs against the previous version, so it can compute and apply only the minimal set of real DOM changes.
 
-22. What is the purpose of `StrictMode` in React?  
-    `StrictMode` is a tool for highlighting potential problems in an application. It activates additional checks and warnings for its descendants:
-    Detects unexpected side effects.
-    Identifies deprecated lifecycle methods.
-    Warns about usage of legacy API patterns.
+**Q: Why do function components need hooks instead of just local variables?**
+A: A plain local variable resets every render and doesn't trigger a re-render when it changes. `useState` persists a value across renders (React stores it outside the function) and schedules a re-render when its setter is called.
 
-23. Explain the `key` prop in React. Why is it important?  
-    The `key` prop is used by React to identify which elements have changed, are added, or are removed.
-    It helps in efficient reconciliation and prevents unnecessary re-renders. Each element in a list should have a unique `key` to ensure stability.
+**Q: What happens if you don't pass a dependency array to `useEffect`?**
+A: The effect runs after every render. An empty array `[]` runs it once after the initial mount; a populated array runs it only when one of those values changes between renders.
 
-24. How does `PropTypes` help in React?  
-    `PropTypes` is a runtime type-checking tool used to validate the props passed to a component.
-    It ensures that components receive props of the correct type and raises warnings during development if the validation fails.
+**Q: Why is using array index as a key considered an anti-pattern?**
+A: If the list order can change (insert, remove, reorder, filter), the index no longer maps to the same logical item across renders. React may then reuse a DOM node and its internal state for what is conceptually a different item, causing stale UI or wrong component state.
 
-import PropTypes from 'prop-types';
+**Q: Can hooks be called conditionally?**
+A: No. Hooks must be called in the same order on every render because React tracks them by call order internally, not by name. Calling them inside `if` statements or loops breaks that ordering and causes subtle state bugs.
 
-MyComponent.propTypes = {
-name: PropTypes.string.isRequired,
-age: PropTypes.number,
-};
+**Q: How do props differ from state in terms of who can change them?**
+A: Props are owned and controlled by the parent and are read-only from the child's perspective; a child should never mutate its own props. State is owned by the component itself and changed only via its own setter (`setState` or a hook's updater function).
 
-25. What is the difference between `React.Fragment` and `<>`?  
-    Both `React.Fragment` and `<>` (short syntax) allow grouping of multiple elements without adding extra nodes to the DOM.
-    The short syntax (`<>`) is a shorthand for `React.Fragment`.
+**Q: What triggers a re-render in React?**
+A: A state update in the component (or an ancestor re-rendering, which by default re-renders all children unless memoized with `React.memo`), a prop change from the parent, or a context value change for components consuming that context.
 
-<React.Fragment>
-
-  <h1>Hello</h1>
-  <p>World</p>
-</React.Fragment>
-
-<>
-
-  <h1>Hello</h1>
-  <p>World</p>
-</>
-
-26. What is server-side rendering (SSR) in React?  
-    SSR is the process of rendering React components on the server and sending the fully rendered HTML to the client.
-    This improves performance and SEO by reducing the time to first content ful paint.
-    Frameworks like Next.js support SSR.
-
-27. What is hydration in React?  
-    Hydration is the process of attaching event listeners and restoring the application
-    state to a server-rendered React application on the client side.
-    This makes the static content interactive.
-
-28. How do you manage side effects in React apart from `useEffect`?  
-    Apart from `useEffect`, you can manage side effects using:
-    Custom Hooks: Encapsulate reusable logic.
-    State Management Libraries: Redux middleware like `redux-thunk` or `redux-saga`.
-    React Query: Handles data fetching with caching and synchronization.
-
-29. What is `forwardRef` in React?  
-    `React.forwardRef` is used to pass a `ref` through a component to one of its child components.
-    It’s commonly used for higher-order components and when working with custom input components.
-
-const MyInput = React.forwardRef((props, ref) => (
-<input ref={ref} {...props} />
-));
-
-30. What is the purpose of `Suspense` in React?  
-    `Suspense` is a component that lets you “wait” for some code to load or a data request to complete.
-    It’s often used with `React.lazy` for lazy-loaded components or libraries like `react-query`.
-
-<Suspense fallback={<div>Loading...</div>}>
-<LazyComponent />
-</Suspense>
-
-31. What is the difference between `Switch` and `Routes` in React Router v6?  
-    `Switch`: Used in React Router v5 to render only the first route that matches.
-    `Routes`: Introduced in React Router v6, works similarly to `Switch` but has a simpler syntax and supports nested routing.
-
-32. How does `useTransition` improve user experience in React?  
-    `useTransition` is a React hook that allows marking updates as non-urgent.
-    It keeps the interface responsive during state transitions by rendering a fallback UI while waiting for the transition to complete.
-
-33. What is `Recoil` in React?  
-    `Recoil` is a state management library for React applications.
-    It provides a way to manage shared state across components with better performance than Context API for large applications.
-
-What is React Virtual Dom
-react stateless componet
-what is redux
-Why did React gain more popularity over the years?
-What are the hooks in React
-What hook can u use to call external API
-How do u implement useEffect
-How can u pass the data between components
-What is redux
-Is there alternatives to redux and what are they
-Why we use redux instead of the others
-What is the latest version of React
-Practice DOM manipulation before doing the assessment (Event binding, removing and adding nodes, changing html attrivutes, etc)
-React promises
-Questions about react
-What is the difference between VueJS and ReactJS
-What is a Single Page Application - SPA
-What React Virtual DOM
-Asked about react hooks, state,
-Compare Angular vs React
-What are the frontend techs u have used
-Then some questions on angular (featues,components,command for create component)
-Some questions on react(advantages,virtual DOM,Real DOM , functional and class component)
+## Related
+- [React Interview Guide](interview-guide.md) - deeper dive with more code examples, Redux, routing, and performance topics

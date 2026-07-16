@@ -1,116 +1,111 @@
-# What is CI/CD?
+# CI/CD (Continuous Integration / Continuous Delivery / Deployment)
 
-CI/CD stands for Continuous Integration and Continuous Delivery/Deployment.
+> **CI/CD** is the practice of automating the build, test, and release of code so that changes move from a developer's commit to a running production system quickly, safely, and repeatably.
 
-CI is the practice of automatically integrating code changes from multiple contributors into a shared repository, often multiple times a day, and running automated tests to detect issues early.
+## Why it matters
 
-CD refers to two related practices:
+CI/CD is one of the most common DevOps topics in interviews because it sits at the intersection of engineering discipline, tooling, and risk management. Interviewers use it to check whether you understand automation as a way to catch bugs early, reduce manual error, and enable frequent, low-risk releases. It also reveals whether you can reason about trade-offs like speed versus safety, and whether you have hands-on experience with real pipelines rather than just the definitions.
 
-Continuous Delivery: Automatically preparing code changes for release to production.
+## Continuous Integration vs. Delivery vs. Deployment
 
-Continuous Deployment: Automatically deploying every code change to production without manual intervention.
+These three terms are related but distinct, and mixing them up is a common interview mistake.
 
-# What are the key benefits of CI/CD?
+| Practice | What happens | Human gate before prod? |
+|---|---|---|
+| Continuous Integration (CI) | Developers merge code into a shared branch frequently; the pipeline auto-builds and runs tests on every merge/commit | N/A (stops before release) |
+| Continuous Delivery (CD) | Every change that passes CI is automatically built into a release-ready artifact and staged for deployment | Yes, manual approval to push to production |
+| Continuous Deployment (CD) | Every change that passes all pipeline stages is automatically released to production | No, fully automated |
 
-- Faster release cycles
+Key point: Continuous Delivery guarantees the code is *always* deployable; Continuous Deployment actually *deploys* it. An organization can practice CI and Continuous Delivery without doing Continuous Deployment (common where compliance or business reasons require a sign-off).
 
-- Early detection of bugs
+## Anatomy of a Pipeline
 
-- Improved code quality
+A pipeline is an ordered set of automated stages that a code change passes through. A typical pipeline looks like:
 
-- Reduced integration issues
+1. **Source** - trigger on commit, PR, or merge to a branch
+2. **Build** - compile code, resolve dependencies, produce a binary or container image
+3. **Test** - unit tests, static analysis/linting, security scans
+4. **Package/Publish** - produce a versioned, immutable artifact and push it to a registry
+5. **Deploy to staging** - deploy the artifact to a non-production environment; run integration/end-to-end tests
+6. **Approval (if Continuous Delivery)** - manual gate, often with change-management sign-off
+7. **Deploy to production** - roll out using a strategy such as blue-green, canary, or rolling deployment
+8. **Monitor/Rollback** - observe health metrics and automatically or manually roll back on failure
 
-- Consistent deployment process
+```mermaid
+flowchart LR
+    A["Developer commit"] --> B["Source control<br/>(trigger webhook)"]
+    B --> C["Build<br/>(compile / install deps)"]
+    C --> D["Test<br/>(unit, lint, SAST)"]
+    D --> E{"Tests pass?"}
+    E -- "No" --> F["Fail pipeline<br/>notify developer"]
+    E -- "Yes" --> G["Package<br/>(build artifact/image)"]
+    G --> H["Publish to registry"]
+    H --> I["Deploy to staging"]
+    I --> J["Integration / E2E tests"]
+    J --> K{"Continuous Delivery<br/>or Deployment?"}
+    K -- "Delivery: manual approval" --> L["Approval gate"]
+    K -- "Deployment: automatic" --> M["Deploy to production"]
+    L --> M
+    M --> N["Monitor health"]
+    N --> O{"Healthy?"}
+    O -- "No" --> P["Automated rollback"]
+    O -- "Yes" --> Q["Release complete"]
+```
 
-- Better collaboration between development and operations
+## Artifacts and Environments
 
-# What tools are commonly used for CI/CD?
+An **artifact** is the immutable, versioned output of a build (a JAR, a container image, a compiled binary) that flows unchanged through every later stage. Rebuilding per environment is an anti-pattern because it breaks the guarantee that what you tested is what you ship - the same artifact should be promoted from environment to environment, only its configuration should change.
 
-- CI Tools: Jenkins, GitHub Actions, GitLab CI, CircleCI, Travis CI, Bamboo
+**Environments** typically form a promotion chain:
 
-- CD Tools: Spinnaker, Argo CD, Flux
+| Environment | Purpose |
+|---|---|
+| Dev/Local | Fast feedback for the developer |
+| CI/Build | Ephemeral environment where the pipeline runs tests |
+| Staging/QA | Production-like environment for integration and acceptance testing |
+| Production | Live environment serving real users |
 
-- Supporting tools: Docker, Kubernetes, Terraform, Ansible, Helm
+Configuration (URLs, credentials, feature flags) should be externalized per environment, not baked into the artifact, so the same build can be promoted safely.
 
-# What is the difference between Continuous Delivery and Continuous Deployment?
+## Deployment Strategies
 
-Continuous Delivery prepares code for production release but requires manual approval to deploy.
+- **Rolling deployment** - gradually replace old instances with new ones; simple but rollback is slower.
+- **Blue-green deployment** - run two identical environments; switch traffic all at once, keep the old one as an instant rollback path.
+- **Canary release** - route a small percentage of traffic to the new version, watch metrics, then ramp up or roll back.
+- **Feature flags** - decouple deployment from release by shipping code dark and enabling it via configuration.
 
-Continuous Deployment automatically deploys code to production without manual steps.
+## Tooling Landscape
 
-# What is a pipeline in CI/CD?
+- **CI/CD platforms**: Jenkins, GitHub Actions, GitLab CI, CircleCI, Bamboo
+- **CD/GitOps tools**: Argo CD, Flux, Spinnaker
+- **Supporting infrastructure**: Docker (packaging), Kubernetes (orchestration), Terraform/Ansible/CloudFormation (Infrastructure as Code)
+- **Quality and security**: SonarQube (static analysis), Trivy/Snyk (dependency and image scanning)
+- **Secrets management**: HashiCorp Vault, AWS Secrets Manager, or the CI platform's native secret store - never hardcode secrets in pipeline scripts or source code.
 
-A pipeline is a set of automated steps that code goes through from commit to deployment. It typically includes stages like:
+## Common Interview Questions
 
-Code checkout
+**Q: What is the difference between Continuous Delivery and Continuous Deployment?**
+A: Continuous Delivery automatically prepares every passing change into a release-ready artifact but requires a manual approval step before it reaches production. Continuous Deployment removes that manual gate and deploys automatically once all pipeline checks pass.
 
-Build
+**Q: Why should you build an artifact once and promote it across environments instead of rebuilding for each environment?**
+A: Rebuilding risks introducing differences (dependency versions, compiler flags) between what was tested and what is deployed. Building once and promoting the same immutable artifact guarantees that staging and production run exactly what passed CI.
 
-Test
+**Q: What is the difference between a rolling deployment, blue-green deployment, and canary release?**
+A: A rolling deployment replaces instances incrementally with no separate environment. Blue-green runs two full environments and cuts traffic over instantly, giving a fast rollback. Canary releases route a small slice of production traffic to the new version first, reducing blast radius before a full rollout.
 
-Package
+**Q: How do you handle secrets in a CI/CD pipeline?**
+A: Use a dedicated secrets manager (Vault, AWS Secrets Manager) or the CI platform's encrypted secret store, inject secrets as environment variables or mounted files at runtime, restrict access with least privilege, and never commit secrets to source control or bake them into images.
 
-Deploy
+**Q: How would you design a rollback strategy?**
+A: Keep previous artifact versions available for redeployment, use deployment strategies (blue-green or canary) that make reverting traffic fast, define automated health checks that trigger rollback on failure, and continue monitoring key metrics after every release.
 
-# How do you handle secrets and sensitive data in CI/CD pipelines?
+**Q: What causes a pipeline to be flaky, and how do you address it?**
+A: Common causes are non-deterministic tests, shared/unstable test environments, race conditions in async code, and network dependencies in tests. Fixes include isolating tests, using test doubles for external services, retrying only where safe, and quarantining flaky tests until fixed rather than ignoring failures.
 
-Use secret management tools like HashiCorp Vault, AWS Secrets Manager, or GitHub/GitLab secrets.
+**Q: How does Infrastructure as Code (IaC) support CI/CD?**
+A: IaC tools like Terraform or CloudFormation let you version and automate the provisioning of environments the same way you version application code. This ensures staging and production environments are consistent, reproducible, and can be recreated or rolled back through the same pipeline discipline used for application deployments.
 
-Avoid hardcoding secrets in scripts or code.
+## Related
 
-Use environment variables securely provided by the CI/CD platform.
-
-# What is the role of containers in CI/CD?
-
-Containers (e.g., Docker) ensure that applications run in consistent environments across development, testing, and production. They help:
-
-Speed up build and deployment
-
-Simplify dependency management
-
-Improve scalability and isolation
-
-# How do you ensure quality and security in a CI/CD pipeline?
-
-Add unit, integration, and end-to-end tests
-
-Include linting and static code analysis
-
-Use security scanners (e.g., Snyk, Trivy, SonarQube)
-
-Conduct vulnerability checks for dependencies and containers
-
-Apply approval workflows for production deployments
-
-# What are some challenges you’ve faced in implementing CI/CD?
-
-Long pipeline execution times
-
-Flaky tests slowing down deployment
-
-Environment mismatches between dev and prod
-
-Managing secrets and credentials securely
-
-Resistance to cultural change within teams
-
-# How would you implement a rollback strategy in a CI/CD pipeline?
-
-Maintain previous builds/artifacts for quick redeployment
-
-Use blue-green deployments or canary releases
-
-Automate rollback steps in case of failed health checks
-
-Monitor production health post-deployment and trigger rollback on anomalies
-
-# What is Infrastructure as Code (IaC) and how does it relate to CI/CD?
-
-IaC is managing and provisioning infrastructure using code and automation tools like Terraform, CloudFormation, or Ansible.
-In CI/CD, IaC ensures:
-
-Consistent environments
-
-Version-controlled infrastructure
-
-Easy automation of infrastructure s
+- [Docker](docker.md) - containers provide the consistent, portable artifact format that CI/CD pipelines build, test, and promote.
+- [Kubernetes](kubernetes.md) - the deployment target that pipelines push artifacts to, using strategies like rolling updates and canary releases.

@@ -110,6 +110,6 @@ A: Forwarding your agent to a remote host lets that host request signatures from
 
 ## Related
 
-- [TLS](tls.md) - shares the same asymmetric-to-symmetric handshake pattern used to secure HTTPS
-- [DNS](dns.md) - name resolution that typically happens before the TCP connect in the SSH handshake
+- [SSL/TLS](ssl.md) - shares the same asymmetric-to-symmetric handshake pattern used to secure HTTPS
+- [TCP](tcp.md) - the transport-layer connection SSH is layered on top of
 - [HTTP/HTTPS](http.md) - contrast SSH's TOFU trust model with the CA-based trust model of HTTPS

@@ -161,6 +161,5 @@ A: A single linear scan checking `arr[i] <= arr[i+1]` for all i detects this in 
 
 ## Related
 
-- [Searching Algorithms](searching.md) - binary search relies on the sorted order these algorithms produce
 - [Big-O Complexity](complexity.md) - the notation used throughout this comparison
 - [Recursion](recursion.md) - the technique underlying merge sort and quicksort's divide-and-conquer structure

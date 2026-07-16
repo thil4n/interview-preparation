@@ -102,7 +102,7 @@ sequenceDiagram
 |---|---|---|
 | Format | XML only | JSON, XML, plain text, etc. |
 | Contract | Formal (WSDL), required | Optional (OpenAPI/Swagger) |
-| Transport | HTTP, SMTP, TMQ, etc. | Almost always HTTP |
+| Transport | HTTP, SMTP, JMS, etc. | Almost always HTTP |
 | Style | Operation/RPC-oriented | Resource-oriented (nouns + verbs) |
 | Statelessness | Not enforced; can be stateful | Core architectural constraint |
 | Error handling | Standardized `Fault` element | HTTP status codes |

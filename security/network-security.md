@@ -1,227 +1,106 @@
-# What is the difference between IDS and IPS?
+# Network & Application Security
 
-Answer:
-• IDS (Intrusion Detection System) monitors traffic and alerts when suspicious activity is detected.
-• IPS (Intrusion Prevention System) actively blocks or prevents those threats in real time.
-• IDS is passive, IPS is inline and reactive.
+> **Network and application security** is the set of controls - encryption, access control, filtering, and monitoring - used to protect data and systems as they move across networks and are used by applications.
 
-# What is a firewall and how does it work?
+## Why it matters
 
-Answer:
-A firewall is a network security device or software that filters traffic based on pre-defined rules (e.g., IPs, ports, protocols).
-It can be stateless (checks packets individually) or stateful (tracks connection state for context-aware filtering).
+Interviewers probe this topic to check whether you think in layers rather than relying on a single control. Real breaches almost always exploit a gap between two layers (e.g., a firewall that's fine but an application that trusts unsanitized input). Expect questions that mix textbook definitions (IDS vs IPS) with scenario-based ones ("how would you secure a public-facing app?").
 
-# Explain the TCP three-way handshake.
+## Authentication vs Authorization
 
-Answer: 1. SYN: Client sends a SYN to initiate a connection. 2. SYN-ACK: Server responds with SYN-ACK. 3. ACK: Client replies with ACK, establishing the connection.
-This handshake is essential for reliable communication and is often targeted in SYN flood attacks.
+These are frequently confused but solve different problems and usually happen in sequence.
 
-# What is a SYN flood attack and how do you mitigate it?
+| Aspect | Authentication | Authorization |
+|---|---|---|
+| Question answered | Who are you? | What are you allowed to do? |
+| Order | Happens first | Happens after authentication succeeds |
+| Typical mechanisms | Passwords, MFA, biometrics, client certificates, tokens (JWT/OIDC) | RBAC, ABAC, ACLs, OAuth scopes |
+| Failure mode | Impersonation / identity theft | Privilege escalation |
 
-Answer:
-A SYN flood is a DoS attack where an attacker sends many SYN requests but doesn’t complete the handshake.
-Mitigation:
-• Use SYN cookies
-• Configure firewalls to limit SYNs
-• Deploy rate limiting or intrusion prevention systems
+A common real-world flow: a client authenticates once (e.g., via OIDC) to get a token, then that token's claims are checked on every subsequent request to authorize specific actions.
 
-# What is a DMZ in network architecture?
+## Defense in Depth
 
-Answer:
-A DMZ (Demilitarized Zone) is a network segment that separates external-facing services (like web servers) from the internal network.
-It reduces the risk to internal systems if the public-facing services are compromised.
+No single control is trusted to stop every attack. Instead, overlapping layers each add friction, so a failure in one layer doesn't mean full compromise.
 
-# What is port scanning and how can it be detected?
+```mermaid
+flowchart TD
+    A["Perimeter<br/>Firewall / IPS"] --> B["Network<br/>Segmentation / VLANs / DMZ"]
+    B --> C["Host<br/>Hardening / Patching / Endpoint protection"]
+    C --> D["Application<br/>Input validation / WAF"]
+    D --> E["Data<br/>Encryption at rest / Access control"]
+    E --> F["Identity<br/>Authentication / MFA / Least privilege"]
+    F --> G["Monitoring<br/>IDS / SIEM / Logging"]
+```
 
-Answer:
-Port scanning is used to discover open ports and services on a target system.
-Detection methods:
-• Analyze logs for repeated connection attempts
-• Use IDS tools like Snort
-• Monitor for abnormal traffic patterns
+If an attacker bypasses the firewall, network segmentation limits lateral movement; if they reach a host, patching and endpoint protection slow them down; if they reach the application, input validation and a WAF block common payloads; and if data is stolen anyway, encryption at rest renders it useless without the key.
 
-# How does a VPN work?
+## Encryption: In Transit vs At Rest
 
-Answer:
-A VPN (Virtual Private Network) encrypts data traffic and tunnels it through a secure connection to a remote server.
-It provides confidentiality, integrity, and authenticity, often using protocols like IPSec or SSL/TLS.
+| | In Transit | At Rest |
+|---|---|---|
+| Protects | Data moving across a network | Data stored on disk, in a database, or in backups |
+| Common technology | TLS/SSL, IPsec, VPN tunnels | AES-256 disk/volume encryption, database transparent data encryption (TDE) |
+| Key attack it prevents | Eavesdropping, man-in-the-middle | Theft of stolen disks, backups, or database dumps |
 
-# What is MAC filtering? Is it secure?
+TLS uses asymmetric cryptography (e.g., RSA or ECDHE) during the handshake to agree on a session key, then switches to fast symmetric encryption (e.g., AES) for the actual data - a hybrid cryptosystem. This is also why "symmetric vs asymmetric" comes up as a standalone question: symmetric is fast and used for bulk data, asymmetric is slower but solves key exchange and authentication.
 
-Answer:
-MAC filtering allows or denies devices based on their MAC addresses.
-It’s a basic security measure but can be easily bypassed by MAC spoofing, so it’s not reliable as a primary control.
+## Firewalls and Network Segmentation
 
-# What is ARP poisoning and how is it prevented?
+- **Firewalls** filter traffic against rules on IP, port, and protocol. Stateless firewalls inspect each packet independently; stateful firewalls track connection state, allowing context-aware decisions (e.g., only allow return traffic for connections the internal network initiated).
+- **DMZ (Demilitarized Zone)**: a network segment that isolates public-facing services (web servers, reverse proxies) from the internal network, so a compromised public server doesn't give direct access to internal systems.
+- **VLANs and segmentation**: splitting a flat network into isolated zones limits broadcast domains and restricts lateral movement if a host is compromised.
+- **Zero Trust**: assumes no implicit trust even for internal traffic. Every request is authenticated and authorized, combined with micro-segmentation and least privilege, instead of trusting anything "inside the perimeter."
 
-Answer:
-ARP poisoning is a type of Man-in-the-Middle attack where an attacker sends fake ARP messages to link their MAC with another IP (e.g., the gateway).
-Prevention:
-• Use static ARP entries
-• Enable dynamic ARP inspection (DAI) on switches
-• Use network segmentation
+## Common Attacks and Mitigations
 
-# What is the difference between TCP and UDP in security context?
+| Attack | Mechanism | Key mitigations |
+|---|---|---|
+| XSS (Cross-Site Scripting) | Malicious script is injected into a page and executed in another user's browser | Output encoding/escaping, Content-Security-Policy, input validation, `HttpOnly`/`Secure` cookies |
+| CSRF (Cross-Site Request Forgery) | A logged-in user's browser is tricked into sending an unwanted authenticated request | Anti-CSRF tokens, `SameSite=Strict/Lax` cookies, re-authentication for sensitive actions |
+| SQL Injection | Unsanitized input alters the structure of a SQL query | Parameterized queries/prepared statements, ORM query builders, least-privilege DB accounts |
+| MITM (Man-in-the-Middle) | Attacker intercepts or alters traffic between two parties, often via ARP poisoning or rogue Wi-Fi | TLS everywhere, HSTS, certificate validation/pinning, mutual TLS |
 
-Answer:
-• TCP is connection-oriented, with error checking and reliability, making it easier to track sessions.
-• UDP is connectionless, faster but lacks built-in security; used in attacks like UDP flood or amplification attacks (e.g., DNS reflection).
+```sql
+-- Vulnerable: user input concatenated directly into the query
+SELECT * FROM users WHERE username = '" + input + "';
 
-# What is the OSI model and why is it important in network security?
+-- Safe: parameterized query, input is never interpreted as SQL
+SELECT * FROM users WHERE username = ?;
+```
 
-Answer:
-The OSI model is a 7-layer framework (Physical → Application) used to understand network communications.
-In security, it helps identify where threats occur and which layer is affected — e.g., Layer 3 (IP spoofing), Layer 4 (port scans), Layer 7 (SQLi, XSS).
+Other network-layer attacks worth knowing: **SYN flood** (exhausts server resources with incomplete TCP handshakes; mitigated with SYN cookies and rate limiting), **ARP poisoning** (fake ARP replies redirect traffic; mitigated with dynamic ARP inspection and static entries), **IP spoofing** (forged source IP to impersonate a trusted host), and **DNS attacks** (cache poisoning, DNS tunneling for data exfiltration, DNS amplification for DDoS - mitigated with DNSSEC and monitoring recursive resolvers).
 
-# What is IP spoofing?
+## Monitoring and Detection
 
-Answer:
-IP spoofing is an attack where the attacker fakes the source IP address in packet headers to masquerade as a trusted source.
-It’s used in DoS attacks, Man-in-the-Middle attacks, and bypassing firewalls.
+- **IDS (Intrusion Detection System)**: passively monitors traffic and alerts on suspicious activity.
+- **IPS (Intrusion Prevention System)**: sits inline and actively blocks detected threats in real time.
+- **SIEM**: aggregates logs across firewalls, hosts, and applications to correlate events and surface indicators of compromise (unusual outbound traffic, repeated failed logins, traffic spikes).
+- **WAF (Web Application Firewall)**: inline filtering specifically for HTTP traffic, catching layer-7 attacks like XSS and SQLi payloads that a network firewall wouldn't understand.
 
-# How does DNS work, and what are DNS-related attacks?
+## Common Interview Questions
 
-Answer:
-DNS (Domain Name System) resolves domain names to IP addresses.
-Common attacks:
-• DNS Spoofing / Cache Poisoning
-• DNS Tunneling (exfiltrate data via DNS queries)
-• DNS Amplification (DDoS reflection attack)
+**Q: What is the difference between authentication and authorization?**
+A: Authentication verifies identity ("who are you"), authorization determines permissions ("what can you do"). Authentication always happens first; authorization decisions are then made using that established identity.
 
-# What is a VLAN and how does it enhance security?
+**Q: How does TLS protect data in transit?**
+A: It uses asymmetric encryption during the handshake to authenticate the server (via certificates) and agree on a shared session key, then uses fast symmetric encryption for the actual data, providing confidentiality, integrity, and authentication.
 
-Answer:
-A VLAN (Virtual LAN) segments a physical network into isolated logical networks.
-This limits broadcast domains and restricts lateral movement, making internal attacks harder.
+**Q: What is the difference between IDS and IPS?**
+A: An IDS passively monitors traffic and generates alerts on suspicious activity. An IPS sits inline and actively blocks or drops malicious traffic in real time. IDS is detective, IPS is preventive.
 
-# Explain network segmentation and its security benefits.
+**Q: Explain SQL injection and how to prevent it.**
+A: SQL injection occurs when unsanitized user input is concatenated into a SQL query, letting an attacker alter its logic (e.g., bypass a login check or dump a table). Prevent it with parameterized queries/prepared statements, ORM frameworks, and least-privilege database accounts.
 
-Answer:
-Network segmentation involves splitting a network into zones (e.g., internal, DMZ, guest).
-It:
-• Limits lateral movement
-• Contains breaches
-• Improves access control
-• Enables micro-segmentation in zero-trust models
+**Q: What is CSRF and how do SameSite cookies help?**
+A: CSRF tricks an authenticated user's browser into submitting a request the user didn't intend, exploiting the browser's automatic inclusion of cookies. `SameSite=Strict` or `Lax` cookies prevent the browser from sending the session cookie on cross-site requests, breaking the attack; anti-CSRF tokens provide a second layer of defense.
 
-# What are common indicators of a network intrusion?
+**Q: What is a man-in-the-middle attack, and how does ARP poisoning enable one on a local network?**
+A: A MITM attack intercepts or alters communication between two parties who believe they're talking directly to each other. On a LAN, ARP poisoning lets an attacker send forged ARP replies that associate their MAC address with the gateway's IP, routing victim traffic through the attacker. TLS and dynamic ARP inspection are the primary defenses.
 
-Answer:
-• Sudden traffic spikes
-• Unusual port scanning
-• Unauthorized login attempts
-• Abnormal outbound connections
-• SIEM alerts or IDS detections
+**Q: Why is defense in depth important instead of relying on a strong firewall?**
+A: A firewall only protects the network perimeter; it does nothing if an attacker gets in through a phished credential, a vulnerable application, or an insider. Defense in depth layers independent controls (network, host, application, data, identity, monitoring) so that a failure in one layer is caught by another, rather than resulting in full compromise.
 
-# How does SSL/TLS protect data in transit?
+## Related
 
-Answer:
-SSL/TLS uses asymmetric encryption for key exchange and symmetric encryption for the session, ensuring:
-• Confidentiality (encrypted data)
-• Integrity (via MACs)
-• Authentication (via certificates)
-
-# What are common Layer 2 attacks and how do you defend against them?
-
-Answer:
-• MAC flooding: Overwhelms switch MAC table – counter with port security.
-• ARP spoofing: Poison ARP cache – defend with DAI or static ARP entries.
-• STP manipulation: Attack switch topology – secure with BPDU Guard.
-
-# How do proxy servers enhance network security?
-
-Answer:
-Proxies:
-• Hide internal IPs
-• Enforce content filtering
-• Provide traffic logging
-• Can terminate SSL connections for inspection (SSL interception)
-
-# What’s the difference between inline and out-of-band security appliances?
-
-Answer:
-• Inline: Actively inspects and filters traffic (e.g., IPS, WAF).
-• Out-of-band: Monitors traffic passively, often used for logging or alerting (e.g., IDS, SPAN port monitoring).
-
-# Your company is experiencing a DDoS attack. What steps would you take to respond?
-
-Answer: 1. Identify and confirm the DDoS using network monitoring and logs. 2. Rate-limit traffic or block source IPs (if applicable). 3. Engage ISP or cloud provider for mitigation (e.g., scrubbing service). 4. Use Web Application Firewall (WAF) and CDN for layer 7 protection. 5. Post-incident analysis to harden defenses and update playbooks.
-
-# How would you secure a public-facing web application at the network level?
-
-Answer:
-• Place app servers in a DMZ.
-• Use a reverse proxy and WAF.
-• Apply strict firewall rules to limit traffic to ports 80/443.
-• Use TLS with strong ciphers.
-• Restrict access to the database using private subnets.
-• Enable logging and monitoring for unusual activity.
-
-# What’s the difference between symmetric and asymmetric encryption in network communication?
-
-Answer:
-• Symmetric: Same key for encryption and decryption (e.g., AES) — fast, used in data transfer.
-• Asymmetric: Public/private key pair (e.g., RSA) — used for key exchange and authentication (e.g., TLS handshake).
-• Most secure protocols use both (hybrid cryptosystems).
-
-# How would you detect and prevent data exfiltration on a corporate network?
-
-Answer:
-• Deploy DLP (Data Loss Prevention) systems.
-• Monitor for unusual outbound traffic, especially to unknown IPs or over DNS.
-• Use firewalls and proxies to block suspicious uploads.
-• Inspect SSL traffic using TLS decryption (where legally permitted).
-• Implement network segmentation and least privilege access.
-
-# What is a Zero Trust Network and how does it differ from traditional network security?
-
-Answer:
-Zero Trust assumes no implicit trust, even inside the network.
-• Requires continuous authentication, micro-segmentation, and policy enforcement.
-• Traditional security trusts internal traffic; Zero Trust validates every request.
-• Implements least privilege and device/user verification.
-
-# How would you secure remote employee connections to the internal network?
-
-Answer:
-• Use a VPN with MFA (Multi-Factor Authentication).
-• Enforce endpoint security (e.g., antivirus, updates, disk encryption).
-• Apply split tunneling policies carefully.
-• Monitor connections with SIEM tools.
-• Use device posture checks before allowing access.
-
-# What are common misconfigurations in firewalls and routers that lead to vulnerabilities?
-
-Answer:
-• Open ports or overly permissive rules
-• Lack of logging or alerts
-• Allowing inbound traffic to internal IPs
-• Default passwords or SNMP community strings
-• No rule cleanup or least privilege applied
-
-# How would you secure DNS in an enterprise environment?
-
-Answer:
-• Use internal recursive DNS servers for clients.
-• Enable DNSSEC for integrity verification.
-• Monitor for DNS tunneling or abuse.
-• Apply split-horizon DNS to hide internal records from public.
-• Use cloud-based DNS firewalls (like Cisco Umbrella) for threat filtering.
-
-# A user reports slow internet. How do you investigate whether it’s a network security issue?
-
-Answer:
-• Check for malicious traffic (e.g., beaconing, exfiltration).
-• Analyze bandwidth usage per IP.
-• Inspect proxy and firewall logs.
-• Scan for malware or unauthorized applications.
-• Rule out DNS hijacking or MITM proxies.
-
-# How do you ensure that sensitive data is secure during network transmission?
-
-Answer:
-• Use TLS 1.2+ for encrypted communications.
-• Enforce HSTS on web servers.
-• Avoid legacy protocols (e.g., FTP, Telnet).
-• Apply VPNs or IPsec tunnels where needed.
-• Ensure certificate validation and cipher suite hardening.
+- [Penetration Testing](penetration-testing.md) - the offensive practice of actively probing these same controls (firewalls, auth, injection points) to validate they hold up

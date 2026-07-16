@@ -1,107 +1,120 @@
-# Explain time Complexity
+# Time & Space Complexity (Big-O)
 
-Time complexity refers to the amount of time an algorithm takes to complete as a function of the size of the input. It helps us understand how the running time of an algorithm grows as the input size increases. Time complexity is typically expressed in Big O notation (O(f(n))), where f(n) represents how the time of execution grows with respect to the input size n.
+> **Big-O notation** describes how an algorithm's running time or memory use grows as the input size `n` grows, ignoring constant factors and lower-order terms.
 
-# What are the annotations used to indicate time complexity
+## Why it matters
 
-- Big O notation
-- Big Omega notation
-- Big Pi notation
+Complexity analysis is how interviewers check that you can reason about an algorithm beyond "does it work." A correct solution that is O(n²) when O(n log n) is achievable signals a gap in fundamentals, and most follow-up questions in an interview ("can you do better?") are really asking you to reduce complexity. Being fluent in Big-O also lets you talk concretely about trade-offs - time vs. space, average case vs. worst case - which is exactly how real engineering decisions get made.
 
-# Explain Common time complexities with respect to Big O notation
+## Notation: O, Ω, and Θ
 
-- O(1): Constant time
-  the execution time does not depend on the input size.
-- O(log n): Logarithmic time
-  the execution time grows logarithmically as the input size increases (e.g., binary search).
-- O(n): Linear time
-  the execution time grows linearly with the input size (e.g., iterating through a list).
-- O(n log n): Log-linear time
-  common for more efficient sorting algorithms like Merge Sort and Quick Sort.
-- O(n²): Quadratic time
-  the execution time grows quadratically with the input size (e.g., bubble sort, selection sort).
-- O(2ⁿ): Exponential time
-  the execution time doubles with each additional input element (e.g., brute-force solutions to the traveling salesman problem).
+- **Big O (O)** - upper bound. "This algorithm never does worse than this."
+- **Big Omega (Ω)** - lower bound. "This algorithm never does better than this."
+- **Big Theta (Θ)** - tight bound. Used when the upper and lower bounds match, giving an exact growth rate.
 
-# Explain space Complexity:
+In interviews, "complexity" almost always means Big O, since it's the worst-case guarantee that matters most for reliability.
 
-Space complexity refers to the amount of memory an algorithm uses as a function of the input size.
-It considers both the space needed for input data and the additional space needed for variables,
-data structures, and the execution stack during the algorithm's execution.
+## Common Growth Classes
 
-Space complexity is also expressed in Big O notation, similar to time complexity. Key categories include:
+| Class | Name | Example |
+|---|---|---|
+| O(1) | Constant | Array index access, hash map lookup (average case) |
+| O(log n) | Logarithmic | Binary search, balanced BST lookup |
+| O(n) | Linear | Single pass through an array, linear search |
+| O(n log n) | Log-linear | Merge sort, quicksort (average), heap sort |
+| O(n²) | Quadratic | Bubble sort, selection sort, nested loops over the same input |
+| O(2ⁿ) | Exponential | Brute-force subset generation, naive recursive Fibonacci |
 
-O(1): Constant space – the space required does not depend on the input size.
-O(n): Linear space – the space required grows linearly with the input size (e.g., an algorithm that
-stores all elements of an array).
-O(n²): Quadratic space – the space required grows quadratically (e.g., a 2D matrix for an algorithm
-like Floyd-Warshall for shortest paths).
-Examples:
+As `n` grows, the gap between these classes widens dramatically - an O(n²) solution that's fine for `n = 100` can become unusable at `n = 1,000,000`, while an O(n log n) solution scales gracefully.
 
-Time Complexity Example:
-A linear search algorithm has time complexity O(n) because it has to look at each element in the list once.
-A binary search algorithm has time complexity O(log n) because it divides the search space in half with each iteration.
-Space Complexity Example:
-A function that uses an extra array to store results (e.g., dynamic programming) has space complexity O(n).
-A function that operates in-place without allocating extra space (e.g., using two pointers to reverse an array) may have O(1) space complexity.
-Possible Interview Questions:
+```mermaid
+flowchart LR
+    A["O(1)<br/>Constant"] --> B["O(log n)<br/>Logarithmic"]
+    B --> C["O(n)<br/>Linear"]
+    C --> D["O(n log n)<br/>Log-linear"]
+    D --> E["O(n²)<br/>Quadratic"]
+    E --> F["O(2ⁿ)<br/>Exponential"]
 
-# Explain the difference between time complexity and space complexity.
+    style A fill:#2ecc71,color:#000
+    style B fill:#82c785,color:#000
+    style C fill:#f1c40f,color:#000
+    style D fill:#e67e22,color:#000
+    style E fill:#e74c3c,color:#000
+    style F fill:#c0392b,color:#fff
+```
 
-Time complexity refers to the amount of time an algorithm takes to complete, while space complexity refers to the amount of memory it uses.
+## Best, Average, and Worst Case
 
-# How do you determine the time complexity of an algorithm?
+Complexity can differ depending on the input, so algorithms are often described by three cases:
 
-Analyze the code or algorithm step by step, counting the number of operations based on input size, and then express that count using Big O notation.
+- **Best case** - the most favorable input (e.g., quicksort on an already-partitioned array).
+- **Average case** - expected performance over typical/random inputs.
+- **Worst case** - the least favorable input; this is what Big O usually refers to and what interviewers care about most, since it's the guarantee you can rely on.
 
-# What is the time complexity of accessing an element in an array?
+| Algorithm | Best | Average | Worst |
+|---|---|---|---|
+| Quicksort | O(n log n) | O(n log n) | O(n²) |
+| Hash table lookup | O(1) | O(1) | O(n) |
+| Binary search | O(1) | O(log n) | O(log n) |
+| Linear search | O(1) | O(n) | O(n) |
 
-O(1) because accessing an element by its index is a constant-time operation.
+Quicksort's worst case (already-sorted input with a naive pivot choice) and a hash table's worst case (all keys colliding into one bucket) are classic examples of why average case doesn't tell the whole story.
 
-# What is the space complexity of an algorithm that uses recursion?
+## Amortized Complexity
 
-Recursion typically adds space to the call stack. The space complexity would depend on the maximum depth of recursion, which is often O(n) for linear recursion or O(log n) for logarithmic recursion.
+Amortized analysis looks at the average cost of an operation over a sequence of operations, even if individual operations occasionally cost more. The canonical example is a dynamic array (like a Java `ArrayList` or a C++ `vector`):
 
-# Explain the time complexity of sorting algorithms like Merge Sort or Quick Sort.
+- Appending is usually O(1).
+- Occasionally the array is full and must be resized (typically doubled), which costs O(n) for that one operation.
+- Spread across `n` appends, the total cost of all the resizes is O(n), so each append is **O(1) amortized**, even though a single append can spike to O(n).
 
-Merge Sort has time complexity O(n log n), and Quick Sort has an average time complexity of O(n log n),
-though it can degrade to O(n²) in the worst case.
+This is distinct from average case: amortized analysis is a guarantee about a sequence of operations on the *same* data structure, not a statement about random inputs.
 
-# What is the time complexity of searching in a balanced binary search tree (BST)?
+## Space Complexity
 
-O(log n) because a balanced BST reduces the search space by half at each step, similar to binary search.
+Space complexity measures the extra memory an algorithm needs beyond the input itself (sometimes called auxiliary space), as a function of `n`.
 
-# How would you optimize the space complexity of an algorithm?
+- **O(1) space** - in-place algorithms, e.g., reversing an array with two pointers, or iterative algorithms with a fixed number of variables.
+- **O(n) space** - algorithms that store a copy of the input or intermediate results, e.g., memoized dynamic programming, or a hash map built while scanning a list.
+- **O(n²) space** - algorithms that build a full matrix, e.g., a DP table for edit distance or Floyd-Warshall all-pairs shortest paths.
 
-Use in-place algorithms, reduce unnecessary data storage, and avoid recursive calls that
-create large call stacks when possible.
+Recursion has a hidden space cost: each call frame sits on the call stack, so a recursive function's space complexity is generally proportional to the maximum recursion depth - O(n) for linear recursion, O(log n) for recursion that halves the problem each call (like a balanced divide-and-conquer). Tail-call optimization can eliminate this in some languages, but it isn't guaranteed in most mainstream ones (Python and Java, for example, don't do it).
 
-# Can you explain the space complexity of a recursive function?
+```mermaid
+flowchart TD
+    A["Analyze algorithm"] --> B{"Does memory usage<br/>depend on input size?"}
+    B -->|No, fixed extra vars| C["O(1) space"]
+    B -->|"Stores one copy of input<br/>(e.g., visited set, DP array)"| D["O(n) space"]
+    B -->|"Stores pairwise data<br/>(e.g., 2D DP table)"| E["O(n²) space"]
+    A --> F{"Uses recursion?"}
+    F -->|Yes| G["Add call-stack depth<br/>to space complexity"]
+```
 
-The space complexity of a recursive function is proportional to the maximum depth of
-the recursion stack, i.e., O(n) for linear recursion or O(log n) for logarithmic recursion.
+## Common Interview Questions
 
-# What is the time complexity of iterating over a 2D array?
+**Q: What's the difference between time complexity and space complexity?**
+A: Time complexity measures how the runtime grows with input size; space complexity measures how the extra memory used grows with input size. They're analyzed independently, and improving one can worsen the other.
 
-O(n \* m) where n is the number of rows and m is the number of columns,
-as you need to iterate through all elements.
+**Q: What's the difference between Big O, Big Omega, and Big Theta?**
+A: Big O is an upper bound (worst case), Big Omega is a lower bound (best case), and Big Theta is a tight bound where the upper and lower bounds coincide. Interviews almost always focus on Big O.
 
-# How do you evaluate the performance of an algorithm with both time and space constraints?
+**Q: What is amortized time complexity, and why does dynamic array append run in O(1) amortized?**
+A: It's the average cost per operation across a sequence, allowing occasional expensive operations as long as they're rare enough. Dynamic array append is O(1) amortized because resizing (O(n)) happens infrequently enough that its cost, spread across all prior appends, averages out to O(1) per append.
 
-You analyze both aspects independently using Big O notation for time and space complexity,
-and then choose the algorithm that fits the specific constraints of your application.
+**Q: Why can quicksort be O(n log n) on average but O(n²) in the worst case?**
+A: Quicksort's performance depends on how balanced its partitions are. With a good pivot choice it splits the array roughly in half each time (O(n log n)), but with a poor pivot choice (e.g., always picking the first element on an already-sorted array) it can degrade to unbalanced partitions of size n-1 and 1, giving O(n²).
 
-# Give an example of a situation where space complexity is more critical than time complexity.
+**Q: What is the space complexity of a recursive function, and how does it relate to the call stack?**
+A: It's proportional to the maximum depth of the recursion, since each active call adds a frame to the call stack. Linear recursion (e.g., naive factorial) is O(n) space; recursion that halves the input each call (e.g., balanced binary search) is O(log n) space.
 
-In embedded systems or mobile devices with limited memory resources,
-optimizing space complexity might be more important than time complexity.
+**Q: Can you trade space for time, or vice versa?**
+A: Yes - this is a common optimization pattern. Memoization/dynamic programming stores intermediate results (extra space) to avoid recomputing them (saving time), and hashing trades memory for near-constant-time lookups instead of linear scans.
 
-# What is the time complexity of the breadth-first search (BFS) algorithm?
+**Q: What's the time complexity of iterating over a 2D array, and of BFS on a graph?**
+A: A full 2D array traversal is O(n·m) for an n-by-m array. BFS is O(V + E), since it visits every vertex once and examines every edge once.
 
-O(V + E), where V is the number of vertices and E is the number of edges in the graph,
-because BFS explores all vertices and edges.
+## Related
 
-# Can time complexity be improved at the cost of space complexity?
-
-Yes, in some cases. For example, dynamic programming techniques trade off space (storing intermediate results) for improved time complexity compared to brute force.
-These questions help assess a candidate’s understanding of algorithmic efficiency and their ability to evaluate trade-offs between time and space.
+- [Sorting Algorithms](sorting.md) - concrete algorithms that illustrate O(n log n) vs O(n²) trade-offs
+- [Recursion](recursion.md) - where call-stack space complexity comes from
+- [Coding Problems](coding-problems.md) - practice applying complexity analysis to real problems

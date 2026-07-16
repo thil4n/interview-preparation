@@ -1,149 +1,172 @@
-## What is an API?
+# API Concepts
 
-An API (Application Programming Interface) is a set of rules and protocols that allows different software applications to communicate with each other. It defines methods and data formats applications can use to request and exchange information.
+> An **API** (Application Programming Interface) is a contract that lets two pieces of software exchange data and trigger behavior without either side needing to know the other's internal implementation.
 
-## What are the different types of APIs?
+## Why it matters
 
-- Open APIs (Public APIs): Available to external developers and third parties.
+API design questions show up in nearly every backend interview because they reveal whether a candidate has actually operated a service in production, not just built one. Idempotency, statelessness, versioning, pagination, and rate limiting separate a toy endpoint from an API that survives retries, scale, and years of client integrations. Auth questions (API keys vs OAuth vs JWT) check whether you understand the difference between identifying a caller and authorizing what it can do.
 
-- Internal APIs (Private APIs): Restricted to internal systems and teams.
+## What Is an API?
 
-- Partner APIs: Shared with specific business partners with controlled access.
+An API defines the methods, data formats, and rules two systems use to communicate. In HTTP-based APIs, this usually means:
 
-- Composite APIs: Combine multiple API calls into a single request for efficiency.
+- **Endpoint** - a URL that represents a resource or action, e.g. `https://api.example.com/v1/users/42`.
+- **Method** - the verb describing the intended operation (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
+- **Payload** - the request or response body, typically JSON.
+- **Status code** - a machine-readable outcome (`200`, `201`, `400`, `401`, `404`, `429`, `500`).
 
-## What is the difference between synchronous and asynchronous APIs?
+| Style | Transport / Format | Typical Fit |
+|---|---|---|
+| REST | HTTP + JSON | General-purpose CRUD APIs |
+| GraphQL | HTTP + a query language | Clients need flexible, shaped responses |
+| SOAP | HTTP/SMTP + XML, strict contracts | Legacy enterprise, formal service contracts |
+| gRPC | HTTP/2 + Protocol Buffers | Low-latency internal service-to-service calls |
 
-- Synchronous APIs: The client waits for the server to respond before continuing execution.
+See [rest.md](rest.md), [graphql.md](graphql.md), and [soap.md](soap.md) for style-specific detail.
 
-- Asynchronous APIs: The client does not wait; it receives the response later through callbacks or events.
+## The Request/Response Cycle
 
-## What is an API endpoint?
+Every API call is fundamentally a round trip: a client sends a request, something processes it, and a response comes back with a status and a body.
 
-An API endpoint is a specific URL where an API provides access to a particular resource or service.
-For example: https://api.example.com/users.
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway as API Gateway
+    participant Service
+    participant DB as Database
+    Client->>Gateway: GET /users/42
+    Gateway->>Gateway: Authenticate and check rate limit
+    Gateway->>Service: Forward request
+    Service->>DB: Query user 42
+    DB-->>Service: Row data
+    Service-->>Gateway: 200 OK plus JSON body
+    Gateway-->>Client: 200 OK plus JSON body
+```
 
-## What is an API key?
+The gateway layer commonly handles cross-cutting concerns - auth, rate limiting, transformation, caching - so individual services don't reimplement them.
 
-An API key is a unique identifier used to authenticate and authorize access to an API.
-It is typically passed in the request header or as a query parameter.
+## Idempotency
 
-## What is an API rate limit?
+An operation is **idempotent** if calling it once has the same effect as calling it many times. This matters because networks fail: a client that times out waiting for a response often retries, and idempotent methods make that safe.
 
-API rate limiting controls how many requests a client can make to an API within a specified time.
-This protects servers from being overwhelmed and ensures fair usage.
+| Method | Idempotent | Safe (no side effects) | Notes |
+|---|---|---|---|
+| GET | Yes | Yes | Read-only |
+| PUT | Yes | No | Replaces a resource entirely; repeating it gives the same end state |
+| DELETE | Yes | No | Deleting an already-deleted resource is still "deleted" |
+| POST | No | No | Typically creates a new resource each time unless an idempotency key is used |
+| PATCH | Depends | No | Idempotent only if the update is a full replacement, not a relative change like "increment by 1" |
 
-## What are webhooks?
+For non-idempotent operations like payments, APIs often accept an **idempotency key** (a client-generated unique ID) so the server can detect and safely ignore duplicate retries.
 
-Webhooks are automated messages sent by an API to notify external services about events.
-They enable real-time communication by sending POST requests to a specified endpoint.
+## Statelessness
 
-## What is the difference between REST APIs and SOAP APIs?
+REST APIs are typically designed to be **stateless**: the server holds no memory of previous requests from a client, and every request carries all the information needed to process it (credentials, context, etc.). This has real consequences:
 
-- REST APIs: Use HTTP methods (GET, POST, etc.), lightweight, and commonly use JSON.
+- Any server instance can handle any request, making horizontal scaling and load balancing straightforward.
+- There's no server-side session to lose if an instance crashes.
+- State is carried by the client, usually via a bearer token or JWT rather than a session ID.
 
-- SOAP APIs: Use XML format, follow a strict protocol (WS-Security), and are more complex.
+The trade-off: requests can get larger, and the server can't push data without the client asking - which is why webhooks and streaming exist for real-time needs (see [streaming.md](streaming.md)).
 
-## What is an API gateway?
+## Versioning
 
-An API gateway is an intermediary that manages and routes API requests.
-It handles authentication, rate limiting, caching, and request transformation.
+APIs change, but existing clients can't be forced to update on your schedule. Versioning lets you evolve an API without breaking consumers.
 
-## What is API documentation?
+| Strategy | Example | Pros | Cons |
+|---|---|---|---|
+| URI path | `/v1/users` | Explicit, easy to route and cache | Clutters URLs; encourages full-resource duplication |
+| Custom header | `Accept: application/vnd.api+json; version=1` | Keeps URLs clean | Less discoverable; harder to test in a browser |
+| Query parameter | `/users?version=1` | Simple to add | Easy to omit by accident; complicates caching |
 
-API documentation provides detailed information about how to use the API, including available endpoints, request/response formats, authentication methods, and example code.
+Regardless of strategy, prefer additive change (new optional fields) over breaking change, plus a clear deprecation timeline before removing an old version.
 
-## What are the common API authentication methods?
+## Pagination
 
-- API Keys
+Returning an entire dataset in one response doesn't scale. Pagination breaks large result sets into pages.
 
-- OAuth 2.0
+| Approach | Mechanism | Pros | Cons |
+|---|---|---|---|
+| Offset/limit | `?offset=40&limit=20` | Simple to implement; supports jumping to an arbitrary page | Slow on large offsets (databases still scan skipped rows); results shift if rows are inserted/deleted mid-pagination |
+| Cursor-based | `?after=<opaque_token>&limit=20` | Stable and efficient even as data changes underneath; scales well | No random access to an arbitrary page; cursor logic is more complex to build |
 
-- Basic Authentication
+Cursor-based pagination is generally preferred for large, frequently-changing datasets; offset/limit is fine for small, mostly-static ones.
 
-- Bearer Tokens
+## Rate Limiting
 
-- JWT (JSON Web Tokens)
+Rate limiting caps how many requests a client can make in a given window, protecting the service from abuse, accidental overload, and noisy-neighbor clients. Common algorithms:
 
-## What is an SDK?
+- **Fixed window** - count requests per fixed time block (e.g. per minute); simple but allows bursts at window boundaries.
+- **Sliding window** - smooths that boundary effect by tracking requests over a rolling interval.
+- **Token bucket** - a bucket refills at a steady rate; each request consumes a token, allowing controlled bursts up to the bucket size.
+- **Leaky bucket** - requests are processed at a constant rate regardless of burst, smoothing output.
 
-An SDK (Software Development Kit) is a collection of tools, libraries, and documentation that helps developers interact with an API and integrate it into their applications.
+A rate-limited API typically returns `429 Too Many Requests`, with `Retry-After` and `X-RateLimit-*` headers telling the client when to try again.
 
-## What is an API version?
+## Authentication and Authorization
 
-API versioning allows managing changes without breaking existing client applications. Common strategies include versioning via URL (/v1/users), headers, or query parameters.
+Authentication answers "who (or what) is calling?"; authorization answers "what is it allowed to do?" APIs commonly combine several mechanisms:
 
-## What are microservices?
+| Method | Proves | Typical Use | Notes |
+|---|---|---|---|
+| API Key | Identity of the calling application | Server-to-server calls, simple public APIs | No user context; must be treated as a secret, not just an identifier |
+| OAuth 2.0 | Delegated authorization on behalf of a user | Third-party access ("Sign in with Google", granting a scoped token) | A framework of flows, not a token format itself |
+| JWT | Self-contained, signed claims | Access/session tokens issued after login or an OAuth exchange | Verifiable without a database lookup; hard to revoke before it expires |
 
-Microservices are an architectural style where applications are broken into small, independent services.
-Each service handles a specific business function and communicates via APIs.
+A JWT is just three base64url-encoded parts joined by dots:
 
-## What is GraphQL?
+```text
+<header>.<payload>.<signature>
+```
 
-GraphQL is a query language for APIs that allows clients to request exactly the data they need.
-It provides a flexible alternative to REST APIs by combining multiple resources in a single query.
+The header names the signing algorithm, the payload carries claims (user ID, scopes, expiry), and the signature lets the server verify the token hasn't been tampered with - without needing to store session state.
 
-## What is gRPC?
+OAuth 2.0's authorization code flow, the most common browser-based pattern:
 
-gRPC (gRPC Remote Procedure Call) is a high-performance framework for remote communication.
-It uses Protocol Buffers (protobuf) for serialization and supports multiple languages.
+```mermaid
+sequenceDiagram
+    participant User
+    participant App as Client App
+    participant Auth as Authorization Server
+    participant API as Resource API
+    User->>App: Click login button
+    App->>Auth: Redirect to authorize endpoint
+    Auth->>User: Show consent screen
+    User->>Auth: Approve requested scopes
+    Auth-->>App: Redirect back with authorization code
+    App->>Auth: Exchange code for access token
+    Auth-->>App: Return access token (often a JWT)
+    App->>API: Call API with Bearer token
+    API-->>App: Return protected resource
+```
 
-## What is API throttling?
+## Common Interview Questions
 
-API throttling controls the rate of incoming requests to prevent abuse and overuse.
-It can be enforced at different levels, such as per user or per IP address.
+**Q: What makes an HTTP method idempotent, and why does it matter?**
+A: Repeating the same request any number of times produces the same end state as doing it once. It matters because clients retry on timeouts or dropped connections, and idempotent methods make those retries safe without risking duplicate side effects.
 
-## What is a RESTful API?
+**Q: Why is statelessness a core REST constraint?**
+A: It means the server keeps no per-client session between requests, so any instance can handle any request. That makes horizontal scaling and load balancing simple and removes the risk of losing session state when an instance restarts.
 
-A RESTful API follows REST (Representational State Transfer) principles, using stateless communication, resource-based URLs, and HTTP methods for CRUD operations.
+**Q: Offset-based vs cursor-based pagination - when would you choose each?**
+A: Offset/limit is simplest and fine for small or static datasets and when random page access is needed. Cursor-based pagination is preferred at scale or when the underlying data changes frequently, since it stays stable and efficient even as rows are inserted or deleted.
 
-## What is API mocking?
+**Q: What's the difference between authentication and authorization?**
+A: Authentication verifies who or what is making the request (identity). Authorization determines what that authenticated identity is allowed to do (permissions/scopes). An API key or JWT signature handles authentication; scopes or roles in the token handle authorization.
 
-API mocking simulates API responses without calling the actual service.
-It is useful for testing and development when the real API is unavailable.
+**Q: How would you version a public API without breaking existing clients?**
+A: Prefer additive, backward-compatible changes (new optional fields) whenever possible. When a breaking change is unavoidable, introduce a new version (via URI path or header), support both in parallel, and give clients a clear, documented deprecation timeline before retiring the old one.
 
-## What are idempotent methods in APIs?
+**Q: How does rate limiting protect an API, and what should a client do when limited?**
+A: It caps request volume per client to prevent overload and abuse, using algorithms like token bucket or sliding window. When limited, the API returns `429` with headers like `Retry-After`, and a well-behaved client should back off and retry after that interval rather than hammering the endpoint.
 
-Idempotent methods produce the same result no matter how many times the request is repeated. Examples: GET, PUT, DELETE. Non-idempotent: POST.
+**Q: Why use a JWT instead of a server-side session for authentication?**
+A: A JWT is self-contained and signed, so any service can verify it without a shared session store or database lookup, which fits stateless, horizontally scaled architectures. The trade-off is that a JWT can't be easily revoked before it expires, since no server tracks its validity centrally.
 
-## How do you monitor API performance?
+## Related
 
-Monitoring API performance involves tracking metrics like response times, error rates, and throughput using tools like Prometheus, Grafana, or API Gateway analytics.
-
-## What is the difference between public and private APIs?
-
--- Public APIs: Accessible to external developers and third parties.
-
--- Private APIs: Restricted to internal use within an organization.
-
-## What is an API response payload?
-
-An API response payload is the data returned by the API in response to a client request.
-It usually comes in JSON or XML format.
-
-## How do you ensure backward compatibility in APIs?
-
-Maintain backward compatibility by versioning the API, avoiding breaking changes,
-and deprecating old features gradually with clear documentation.
-
-## What are RESTful best practices?
-
-Use clear and consistent naming for resources.
-
-Implement proper HTTP methods and status codes.
-
-Secure APIs with authentication and authorization.
-
-Use pagination and filtering for large datasets.
-
-Provide detailed API documentation.
-
-## What is API pagination?
-
-API pagination handles large datasets by breaking them into smaller pages.
-Common techniques include using limit and offset parameters or cursors.
-
-## What is a callback URL?
-
-A callback URL is the endpoint where an API sends asynchronous responses or event notifications.
-It is commonly used in OAuth flows and webhooks.
+- [rest.md](rest.md) - REST-specific constraints, resource modeling, and HTTP semantics
+- [graphql.md](graphql.md) - a query-based alternative to fixed REST endpoints
+- [soap.md](soap.md) - the older, XML-based, contract-first API style REST largely replaced
+- [streaming.md](streaming.md) - when request/response polling isn't enough and you need continuous data
+- [kafka.md](kafka.md) - event-driven communication as an alternative to synchronous API calls

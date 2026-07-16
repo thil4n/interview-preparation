@@ -122,6 +122,4 @@ A: Git will not silently merge a conflicting region — it always stops and mark
 
 ## Related
 
-- [merge-vs-rebase.md](merge-vs-rebase.md) - deeper dive into history shape and when to choose each strategy
-- [rebase.md](rebase.md) - interactive rebase mechanics referenced during conflict replay
-- [git-internals.md](git-internals.md) - how commits, trees, and the three-way merge algorithm actually work
+- [merge-vs-rebase.md](commands.md) - deeper dive into history shape and when to choose each strategy

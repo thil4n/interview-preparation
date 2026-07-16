@@ -214,7 +214,6 @@ A: No, they can only be hidden. If a subclass declares a static method with the 
 
 ## Related
 
-- [OOP Concepts](oop-concepts.md) - abstraction and inheritance underpin `abstract`, `this`, and `super`
-- [Multithreading](multithreading.md) - deeper dive into `synchronized`, `volatile`, and thread safety
-- [Serialization](serialization.md) - full picture of how `transient` fits into the serialization process
-- [Exception Handling](exception-handling.md) - `try`/`catch`/`finally` control flow in detail
+- [OOP Concepts](java-oop.md) - abstraction and inheritance underpin `abstract`, `this`, and `super`
+- [Multithreading](java-threading.md) - deeper dive into `synchronized`, `volatile`, and thread safety
+- [Exception Handling](java-exceptions.md) - `try`/`catch`/`finally` control flow in detail

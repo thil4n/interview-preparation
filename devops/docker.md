@@ -1,106 +1,142 @@
-# What is Docker and why is it used?
+# Docker
 
-Docker is a platform for developing, shipping, and running applications in containers. Containers package an application with its dependencies, ensuring consistency across environments. Docker simplifies:
+> **Docker** is a platform for packaging an application and its dependencies into a portable, isolated **container** that runs consistently across environments.
 
-Application deployment
+## Why it matters
+Docker questions test whether a candidate understands isolation and packaging, not just the CLI. Interviewers use it to probe whether you can reason about layers and image size, whether you know why containers aren't lightweight VMs, and whether you can debug real production issues like image bloat, networking, or state management. It's also a gateway topic into Kubernetes and CI/CD, so a shaky grasp here tends to show up later.
 
-Environment management
+## Images vs. Containers
+- An **image** is a read-only, immutable template: application code, runtime, libraries, and config, built up in layers.
+- A **container** is a running instance of an image, with a thin writable layer added on top plus its own isolated filesystem view, process namespace, and network stack.
+- One image can spawn many containers, each isolated from the others. Deleting a container does not affect the image it came from.
 
-Scalability
+```mermaid
+flowchart LR
+    Image["Docker Image<br/>(read-only)"] -->|docker run| C1["Container 1<br/>(writable layer)"]
+    Image -->|docker run| C2["Container 2<br/>(writable layer)"]
+    Image -->|docker run| C3["Container 3<br/>(writable layer)"]
+```
 
-Isolation
+## Layers and the Union Filesystem
+Every instruction in a Dockerfile that changes the filesystem (`RUN`, `COPY`, `ADD`) creates a new, read-only **layer**. Docker stacks these layers using a union filesystem (e.g. overlay2), which presents them as a single merged view to the container while storing them separately on disk.
 
-# What is the difference between a container and a virtual machine?
+This design gives two big wins:
+- **Caching** - if a layer's inputs haven't changed, Docker reuses the cached layer instead of rebuilding it, speeding up builds.
+- **Sharing** - multiple images that share a base layer (e.g. the same `FROM ubuntu:22.04`) only store that layer once on disk, and containers only store the delta they add.
 
-Containers share the host OS kernel and run as isolated processes. They are lightweight and start quickly.
+When a container writes or deletes a file, it doesn't modify the underlying image layers. Instead it uses copy-on-write: the file is copied up into the container's own writable layer and modified there.
 
-VMs include a full OS with their own kernel, making them heavier and slower to boot.
+```mermaid
+flowchart TB
+    subgraph Image["Image (read-only layers)"]
+        L1["Layer 1: FROM ubuntu:22.04"]
+        L2["Layer 2: RUN apt-get install"]
+        L3["Layer 3: COPY app code"]
+        L1 --> L2 --> L3
+    end
+    L3 --> W["Container writable layer<br/>(copy-on-write)"]
+```
 
-Containers are more efficient in terms of resource usage compared to VMs.
+## The Dockerfile
+A Dockerfile is a declarative script of instructions used to build an image. Key instructions:
 
-# What is a Dockerfile?
+| Instruction | Purpose |
+|---|---|
+| `FROM` | Sets the base image to build on |
+| `RUN` | Executes a command at build time, creating a new layer |
+| `COPY` / `ADD` | Copies files from the build context into the image (`ADD` also handles remote URLs and tar extraction) |
+| `WORKDIR` | Sets the working directory for subsequent instructions |
+| `EXPOSE` | Documents the port the container listens on (does not publish it) |
+| `ENV` | Sets environment variables |
+| `CMD` | Default arguments/command for the container; easily overridden at `docker run` |
+| `ENTRYPOINT` | The fixed executable the container runs; harder to override |
 
-A Dockerfile is a script containing a set of instructions to build a Docker image. Common commands include:
+```dockerfile
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-FROM – Base image
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+ENTRYPOINT ["node", "dist/server.js"]
+```
 
-RUN – Execute a command
+This example is also a **multi-stage build**: it uses two `FROM` statements so build tools and intermediate artifacts stay out of the final image, keeping it small and free of unnecessary build dependencies.
 
-COPY / ADD – Copy files into the image
+## Registries
+A **registry** stores and distributes images by name and tag (e.g. `myapp:1.2.0`). Docker Hub is the default public registry; teams commonly run private registries (e.g. Amazon ECR, Google Artifact Registry, or a self-hosted registry) for internal images.
 
-CMD / ENTRYPOINT – Define default container behavior
+```mermaid
+flowchart LR
+    Dev["Developer"] -->|docker build| Local["Local image"]
+    Local -->|docker push| Reg["Registry"]
+    Reg -->|docker pull| Host1["Server / Node A"]
+    Reg -->|docker pull| Host2["Server / Node B"]
+```
 
-# What is the difference between CMD and ENTRYPOINT in a Dockerfile?
+## Containers vs. Virtual Machines
+Containers and VMs both provide isolation, but at different layers of the stack.
 
-CMD provides default arguments for the container but can be overridden.
+| Aspect | Container | Virtual Machine |
+|---|---|---|
+| Kernel | Shares the host OS kernel | Runs its own full guest OS and kernel |
+| Isolation boundary | Process/namespace level (via cgroups, namespaces) | Hardware-level, via a hypervisor |
+| Startup time | Seconds or less | Tens of seconds to minutes |
+| Image/disk size | Megabytes (just app + deps) | Gigabytes (full OS) |
+| Density per host | High - many containers per host | Lower - overhead per VM |
+| Isolation strength | Weaker (shared kernel is an attack surface) | Stronger (separate kernel per VM) |
 
-ENTRYPOINT defines the main command to run and is not easily overridden.
-They can be combined for flexible and controlled execution.
+```mermaid
+flowchart TB
+    subgraph VMHost["VM Host"]
+        HW1["Hardware"] --> HV["Hypervisor"]
+        HV --> G1["Guest OS 1"] --> A1["App A"]
+        HV --> G2["Guest OS 2"] --> A2["App B"]
+    end
+    subgraph ContHost["Container Host"]
+        HW2["Hardware"] --> HostOS["Host OS"]
+        HostOS --> Eng["Container Engine"]
+        Eng --> C1["Container A"]
+        Eng --> C2["Container B"]
+    end
+```
 
-# How does Docker networking work?
+## Networking and Data
+Docker ships several network drivers: `bridge` (default, containers on one host communicate via a virtual network), `host` (shares the host's network namespace directly), `overlay` (multi-host networking, used in Swarm), and `none` (no networking). Custom user-defined bridge networks let containers resolve each other by container name.
 
-Docker provides several network drivers:
+For persistent or shared state, use volumes over relying on the container's writable layer:
+- **Volumes** are managed by Docker and stored under `/var/lib/docker/volumes`; they're the recommended way to persist data and survive container removal.
+- **Bind mounts** map a specific host path into the container, useful for local development but less portable.
 
-bridge (default) – containers on the same host can communicate
+Because containers are meant to be immutable and disposable, "updating" one means stopping it, pulling or building a new image, and running a fresh container - not patching a live container in place.
 
-host – shares the host’s network stack
+## Common Interview Questions
+**Q: What is the difference between an image and a container?**
+A: An image is a read-only template built from layers; a container is a running instance of that image with an added writable layer. One image can produce many independent containers.
 
-overlay – used in Docker Swarm for multi-host communication
+**Q: How does the union filesystem make Docker efficient?**
+A: It stacks read-only image layers and overlays a writable layer per container, so unchanged layers are cached and shared across images and containers instead of being duplicated on disk.
 
-none – disables networking
+**Q: What's the difference between CMD and ENTRYPOINT?**
+A: `CMD` sets a default command/arguments that can be overridden at `docker run`; `ENTRYPOINT` sets the fixed executable that always runs, with `CMD` optionally supplying its default arguments. They're often combined.
 
-You can also create custom user-defined bridges for container communication by name.
+**Q: Why are containers faster to start than VMs?**
+A: Containers share the host kernel and only need to start a process, not boot an entire OS, so there is no kernel or hardware initialization overhead like a VM has.
 
-# What is the difference between an image and a container?
+**Q: How do you reduce Docker image size?**
+A: Use a minimal base image like alpine, combine `RUN` instructions to cut down layers, clean up build artifacts in the same layer they were created, use `.dockerignore`, and apply multi-stage builds to drop build-time dependencies from the final image.
 
-Image: A read-only template used to create containers.
+**Q: How do you persist data across container restarts?**
+A: Use Docker volumes (managed by Docker under `/var/lib/docker/volumes`) or bind mounts (mapping a host directory into the container). Volumes are preferred because they're portable and lifecycle-managed by Docker.
 
-Container: A runnable instance of an image, which is isolated and can have its own file system and processes.
+**Q: What is a multi-stage build and why use one?**
+A: It's a Dockerfile pattern with multiple `FROM` statements where later stages selectively `COPY --from=` artifacts out of earlier ones, so compilers and build tools never end up in the shipped image, reducing size and attack surface.
 
-# How do you manage data in Docker containers?
-
-Use volumes and bind mounts:
-
-Volumes are managed by Docker and stored in a special location (/var/lib/docker/volumes).
-
-Bind mounts map directories from the host system into the container.
-They help in persisting data and sharing between containers.
-
-# What is a multi-stage build in Docker?
-
-Multi-stage builds allow you to use multiple FROM statements to build and copy only the necessary artifacts into the final image.
-This reduces the image size and separates build dependencies from runtime.
-
-# How do you reduce the size of a Docker image?
-
-Use minimal base images (like alpine)
-
-Remove unnecessary files after installation
-
-Combine RUN statements to reduce layers
-
-Use .dockerignore to exclude files from the build context
-
-Apply multi-stage builds
-
-# How do you update a running Docker container?
-
-You can’t directly update a running container. Instead:
-
-Stop and remove the old container
-
-Build or pull a new image
-
-Run a new container with the updated image
-Docker containers are meant to be immutable and replaced, not patched.
-
-# What are Docker Compose and its benefits?
-
-Docker Compose is a tool for defining and running multi-container Docker applications using a docker-compose.yml file.
-Benefits:
-
-Easier to define complex applications
-
-Simple multi-container orchestration
-
-Unified configuration for services, volumes, and networks
+## Related
+- [Kubernetes](kubernetes.md) - orchestrates and schedules containers like the ones Docker builds
+- [CI/CD](cicd.md) - pipelines typically build, tag, and push Docker images as part of the release process

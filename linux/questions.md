@@ -143,6 +143,4 @@ A: The kernel immediately removes the process; open file descriptors are closed 
 
 ## Related
 
-- [SQL](sql.md) - another fundamental interview topic often paired with systems questions
-- [Networking](networking.md) - complements process/port questions with how services communicate
-- [Bash Scripting](bash.md) - builds on pipes, redirection, and command composition covered here
+- [SQL](../database/sql.md) - another fundamental interview topic often paired with systems questions

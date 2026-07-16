@@ -1,192 +1,253 @@
-# GRAPHQL
+# GraphQL
 
-## What is GraphQL?
+> **GraphQL** is a query language and runtime for APIs that lets clients request exactly the data they need through a single, strongly-typed endpoint.
 
-GraphQL is a query language for APIs and a runtime for executing those queries. It allows clients to request exactly the data they need, reducing over-fetching and under-fetching issues. It was developed by Facebook in 2012 and open-sourced in 2015.
+## Why it matters
+
+Interviewers ask about GraphQL to see if you understand the trade-offs between flexible, client-driven data fetching and the simplicity of REST. It also tests whether you grasp schema design, resolver execution, and the operational challenges (caching, N+1 queries, security) that come with giving clients this much control. Expect follow-up questions comparing it directly to REST and probing how you'd solve performance and security issues in production.
+
+## Core Components
+
+GraphQL APIs are built from five core pieces:
 
-## What are the core components of GraphQL?
-
- 1. **Schema**: Defines the structure and types of data available.
- 2. **Query**: Used to fetch data (equivalent to GET in REST).
- 3. **Mutation**: Used to modify data (Create, Update, Delete).
-
-4. **Subscription**: Provides real-time updates.   
-5. **Resolver**: Functions that fetch the actual data for the queries and mutations.    --- 
-
- ## 3. How is GraphQL different from REST? 
- 
- | Feature         | GraphQL                      | REST                        | 
- |-----------------|------------------------------|-----------------------------|
-  | Data Fetching   | Request specific fields      | Fetch entire resources      | 
-  | Over-fetching   | No (only requested fields)   | Yes (fixed endpoint data)   | 
-  | Under-fetching  | No (nested queries allowed)  | Yes (multiple requests)     | 
-  | Versioning      | Not required                 | Requires new endpoints      | 
-  | Performance     | Single request for complex data | Multiple round-trips       |  
-  --- 
-  
-  
-   ## 4. What is a GraphQL schema?
-   
-    A GraphQL schema is a blueprint that defines the types of data and operations (queries, mutations, subscriptions) supported by the API.  Example schema: 
-    
-    ```graphql type User {   id: ID!   name: String!   email: String! }  type Query {   getUser(id: ID!): User }  type Mutation {   createUser(name: String!, email: String!): User }`
-
-## what is a GraphQL query?
-
-A query is used to fetch data from the server.
-
-Example query:
-
-graphql
-
-CopyEdit
-
-`query {   getUser(id: "1") {     name     email   } }`
-
-## What is a GraphQL mutation?
-
-A mutation is used to modify data on the server (create, update, delete).
-
-Example mutation:
-
-graphql
-
-CopyEdit
-
-`mutation {   createUser(name: "Alice", email: "alice@example.com") {     id     name   } }`
-
-## What is a GraphQL subscription?
-
-A subscription allows clients to receive real-time updates.
-
-Example subscription:
-
-graphql
-
-CopyEdit
-
-`subscription {   userAdded {     id     name   } }`
-
-## What is a resolver in GraphQL?
-
-Resolvers are functions that handle the logic behind GraphQL queries, mutations, and subscriptions.
-
-Example resolver:
-
-javascript
-
-CopyEdit
-
-`const resolvers = {   Query: {     getUser: (_, { id }) => getUserById(id),   },   Mutation: {     createUser: (_, { name, email }) => createUser(name, email),   }, };`
-
-## What are GraphQL variables and why are they useful?
-
-Variables make queries dynamic and reusable.
-
-Example query with variables:
-
-graphql
-
-CopyEdit
-
-`query GetUser($id: ID!) {   getUser(id: $id) {     name     email   } }`
-
-Passing variables:
-
-json
-
-CopyEdit
-
-`{   "id": "1" }`
-
----
-
-## What is a GraphQL fragment?
-
-A fragment allows you to reuse fields in multiple queries.
-
-Example fragment:
-
-graphql
-
-CopyEdit
-
-`fragment UserFields on User {   id   name   email }  query {   getUser(id: "1") {     ...UserFields   } }`
-
-## How does GraphQL handle errors?
-
-GraphQL returns errors alongside a `data` field.
-
-Example error response:
-
-json
-
-CopyEdit
-
-`{   "data": null,   "errors": [     {       "message": "User not found",       "locations": [{ "line": 2, "column": 3 }],       "path": ["getUser"]     }   ] }`
-
-## What are the benefits of using GraphQL?
-
-- Efficient Data Fetching: Clients request exactly the fields they need.
-- Strongly Typed Schema: Enforces a contract between client and server.
-- Single Endpoint: Access all resources through a single endpoint.
-- Reduced Over-fetching/Under-fetching: Flexible queries prevent these issues.
-- Real-time Updates: Via subscriptions for event-driven data.
-
-## What are the drawbacks of GraphQL?
-
-- Complexity: More setup and learning curve than REST.
-- Caching Challenges: Difficult to cache responses compared to REST.
-- Performance Overhead: Parsing and resolving dynamic queries may be slower.
-- Security Risks: Requires limiting query depth to avoid denial-of-service attacks.
-
-## What is introspection in GraphQL?
-
-Introspection allows clients to query the schema itself and retrieve metadata.
-
-Example introspection query:
-
-`{   __schema {     types {       name       fields {         name       }     }   } }`
-
-## What are some best practices for designing GraphQL APIs?
-
-1. Schema Design: Keep the schema simple and modular.
-2. Pagination: Implement cursor-based pagination for large datasets.
-3. Security: Limit query depth and rate-limit requests.
-4. Batching: Use DataLoader for optimizing N+1 query problems.
-5. Error Handling: Provide clear and consistent error responses.
-6. Caching: Use persisted queries or cache at the resolver level.
-
-## How do you implement authentication and authorization in GraphQL?
-
-- Authentication: Use tokens (e.g., JWT) to verify users.
-- Authorization: Check user roles in resolvers before returning data.
-
-Example context for authorization:
-
-`const server = new ApolloServer({   typeDefs,   resolvers,   context: ({ req }) => {     const token = req.headers.authorization || "";     const user = verifyToken(token);     return { user };   }, });`
-
-## What are Apollo Client and Apollo Server?
-
-- Apollo Client: A state management library for consuming GraphQL APIs.
-- Apollo Server: A GraphQL server implementation supporting queries, mutations, and subscriptions.
-
-## How do you handle pagination in GraphQL?
-
-Implement cursor-based pagination using `startCursor`, `endCursor`, and `hasNextPage`.
-
-Example schema:
-
-`type UserConnection {   edges: [UserEdge]   pageInfo: PageInfo }  type UserEdge {   cursor: String   node: User }  type PageInfo {   hasNextPage: Boolean   endCursor: String }`
-
-## What are some common GraphQL tools and libraries?
-
-1. Apollo Server/Client: Comprehensive GraphQL solution.
-2. GraphQL.js: Core reference implementation.
-3. GraphQL Code Generator: Generates TypeScript types from schema.
-4. Hasura: Auto-generates GraphQL over databases.
-
-## What is schema stitching and federation?
-
-- Schema Stitching: Combines multiple GraphQL schemas into a single schema.
-- Federation: Distributes a GraphQL schema across multiple services while presenting a unified API.
+- **Schema**: A strongly-typed contract that defines every type, field, and operation the API supports. It's the single source of truth for what clients can ask for.
+- **Query**: Read operation, roughly equivalent to `GET` in REST.
+- **Mutation**: Write operation for creating, updating, or deleting data.
+- **Subscription**: A long-lived operation (typically over WebSockets) that pushes real-time updates to clients.
+- **Resolver**: A function attached to each field in the schema that knows how to fetch or compute that field's value.
+
+## Schema and Types
+
+The schema defines object types, their fields, and the root operation types (`Query`, `Mutation`, `Subscription`). Fields can be scalars (`String`, `Int`, `Boolean`, `ID`, `Float`), other object types, or lists of either. A trailing `!` marks a field as non-nullable.
+
+```graphql
+type User {
+  id: ID!
+  name: String!
+  email: String!
+}
+
+type Query {
+  getUser(id: ID!): User
+}
+
+type Mutation {
+  createUser(name: String!, email: String!): User
+}
+
+type Subscription {
+  userAdded: User
+}
+```
+
+## Queries, Mutations, and Subscriptions
+
+**Query** - fetch data, specifying only the fields you need:
+
+```graphql
+query {
+  getUser(id: "1") {
+    name
+    email
+  }
+}
+```
+
+**Mutation** - modify data on the server:
+
+```graphql
+mutation {
+  createUser(name: "Alice", email: "alice@example.com") {
+    id
+    name
+  }
+}
+```
+
+**Subscription** - receive real-time updates when an event occurs:
+
+```graphql
+subscription {
+  userAdded {
+    id
+    name
+  }
+}
+```
+
+**Variables** make queries dynamic and reusable instead of hardcoding values into the query string:
+
+```graphql
+query GetUser($id: ID!) {
+  getUser(id: $id) {
+    name
+    email
+  }
+}
+```
+
+```json
+{ "id": "1" }
+```
+
+**Fragments** let you reuse a named set of fields (e.g. `fragment UserFields on User { id name email }`) across multiple queries instead of repeating field lists.
+
+## Resolvers
+
+A resolver is a function that returns the value for a single field. The GraphQL runtime walks the query, calling the matching resolver for each requested field, passing along the parent object's resolved value so nested fields can use it.
+
+```javascript
+const resolvers = {
+  Query: {
+    getUser: (_, { id }) => getUserById(id),
+  },
+  Mutation: {
+    createUser: (_, { name, email }) => createUser(name, email),
+  },
+};
+```
+
+Resolving a query is a tree walk: the root resolver runs first, then its result is passed down so field resolvers on nested types can run against it.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server as "GraphQL Server"
+    participant QR as "Query Resolver"
+    participant FR as "Field Resolver"
+    participant DB as "Database"
+
+    Client->>Server: "query { getUser(id: 1) { name posts { title } } }"
+    Server->>QR: "resolve getUser(id: 1)"
+    QR->>DB: "fetch user by id"
+    DB-->>QR: "user object"
+    QR-->>Server: "user"
+    Server->>FR: "resolve posts(user)"
+    FR->>DB: "fetch posts by userId"
+    DB-->>FR: "posts list"
+    FR-->>Server: "posts"
+    Server-->>Client: "{ data: { getUser: { name, posts } } }"
+```
+
+Because each field is resolved independently, naively resolving a list's nested field (like `posts` for every user) triggers one database call per item - the classic **N+1 problem**. Batching libraries like DataLoader collapse these into a single query per request.
+
+## Single Endpoint vs REST
+
+GraphQL exposes one endpoint (typically `POST /graphql`); the query body - not the URL - determines what data comes back. REST exposes many endpoints, one per resource, with the response shape fixed by the server.
+
+| Feature | GraphQL | REST |
+|---|---|---|
+| Endpoints | Single endpoint | Multiple resource-based endpoints |
+| Data fetching | Client specifies exact fields | Server determines response shape |
+| Over-fetching | No (only requested fields returned) | Common (fixed response payloads) |
+| Under-fetching | No (nested queries in one request) | Common (requires multiple round-trips) |
+| Versioning | Fields evolve without new versions | Often requires `/v2` endpoints |
+| Caching | Harder (single endpoint, POST-based) | Easy (HTTP caching per URL) |
+| Tooling | Requires GraphQL server/client | Native HTTP tooling everywhere |
+
+Over-fetching happens in REST when an endpoint returns more fields than the client needs (e.g., a `/users/1` endpoint returning 20 fields when the UI only shows a name). Under-fetching happens when a single REST call isn't enough, forcing the client to chain multiple requests (e.g., fetching a user, then separately fetching their posts). GraphQL solves both by letting the client describe the exact shape of data across nested relationships in one request.
+
+```mermaid
+flowchart LR
+    A["Client needs: user name + post titles"] --> B{"REST"}
+    A --> C{"GraphQL"}
+    B --> B1["GET /users/1<br/>(returns full user object)"]
+    B1 --> B2["GET /users/1/posts<br/>(second round-trip)"]
+    C --> C1["POST /graphql<br/>single query, nested fields"]
+```
+
+## Errors and Introspection
+
+GraphQL always returns HTTP 200 for a well-formed request, even on failure, and reports problems in an `errors` array alongside `data`:
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "User not found",
+      "locations": [{ "line": 2, "column": 3 }],
+      "path": ["getUser"]
+    }
+  ]
+}
+```
+
+**Introspection** lets clients query the schema itself, which is what powers tools like GraphiQL and code generators:
+
+```graphql
+{
+  __schema {
+    types {
+      name
+      fields {
+        name
+      }
+    }
+  }
+}
+```
+
+## Pagination
+
+Cursor-based pagination (the Relay connection pattern) is the standard approach for large or frequently-changing datasets, since offset-based pagination can skip or duplicate items when data changes between pages. A `UserConnection` type wraps `edges` (each with a `cursor` and a `node`) and a `pageInfo` object exposing `hasNextPage` and `endCursor`, letting clients page forward without relying on numeric offsets.
+
+## Authentication and Authorization
+
+GraphQL has no built-in auth model - it's handled the same way as any HTTP API, typically via a token passed in headers, verified once, and made available to every resolver through a shared context object:
+
+```javascript
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }) => {
+    const token = req.headers.authorization || "";
+    const user = verifyToken(token);
+    return { user };
+  },
+});
+```
+
+Authorization checks (does this user have permission for this field?) then happen inside individual resolvers using that context.
+
+## Benefits and Drawbacks
+
+Benefits: efficient fetching (only requested fields), a strongly typed, self-documenting schema, a single endpoint instead of many resource URLs, no over/under-fetching, and real-time updates via subscriptions.
+
+Trade-offs: more setup and learning curve than REST, harder HTTP caching (no per-resource URL), parsing/resolving arbitrary queries costs more than serving a fixed response, and unrestricted queries can be abused for denial-of-service - so query depth/complexity limits and rate limiting are essential.
+
+## Tools and Ecosystem
+
+**Apollo Server/Client** and **GraphQL.js** are the most common server/client implementations; **GraphQL Code Generator** produces typed code from a schema; **DataLoader** batches per-request fetches to solve the N+1 problem; **Hasura** auto-generates a GraphQL API over a database.
+
+**Schema stitching** combines multiple independent schemas into one. **Federation** goes further, letting multiple services each own part of a distributed schema while clients see a single unified API - the more common approach in modern microservice architectures.
+
+## Common Interview Questions
+
+**Q: How is GraphQL different from REST?**
+A: REST exposes multiple endpoints where the server fixes the response shape, often causing over-fetching or under-fetching. GraphQL exposes a single endpoint where the client specifies exactly which fields it needs, including across nested relationships, in one request.
+
+**Q: What problem do resolvers solve, and what's the N+1 problem?**
+A: Resolvers are functions that fetch or compute the value for one schema field, letting each field's data source be independent (a database, a microservice, a cache). The N+1 problem occurs when a list field's resolver runs once per item (e.g., fetching posts for each of 50 users individually); DataLoader batches these into a single query.
+
+**Q: How does GraphQL handle versioning compared to REST?**
+A: GraphQL generally avoids versioned endpoints. New fields can be added to types without breaking existing clients, and deprecated fields are marked with `@deprecated` rather than removed, so schemas evolve in place.
+
+**Q: Why is caching harder in GraphQL than REST?**
+A: REST responses are cacheable per URL using standard HTTP caching. GraphQL typically uses a single `POST /graphql` endpoint with varying query bodies, so there's no natural cache key; solutions include persisted queries, response caching keyed on the query+variables hash, or caching at the resolver/data-source level.
+
+**Q: How do you secure a GraphQL API against abusive queries?**
+A: Limit query depth and complexity, set timeouts, use rate limiting, and disable introspection in production if the schema shouldn't be public. Without these, a deeply nested or broad query can force the server to do disproportionate work relative to a single request.
+
+**Q: What is schema federation and why would you use it?**
+A: Federation lets multiple backend services each own and serve a portion of a single logical GraphQL schema, while a gateway composes them into one API for clients. It's used to let independent teams own their part of the graph without one team owning a giant monolithic schema.
+
+**Q: When would you choose REST over GraphQL?**
+A: When the API is simple, resource-shaped, and benefits from HTTP-native caching, or when the team lacks the operational maturity to manage schema evolution, query complexity limits, and resolver performance that GraphQL requires.
+
+## Related
+
+- [REST](rest.md) - the architectural style GraphQL is most often compared and contrasted against
+- [SOAP](soap.md) - another API paradigm with contrasting design philosophy (rigid contracts vs flexible queries)
+- [Streaming](streaming.md) - relevant background for how GraphQL subscriptions deliver real-time data
+- [API Concepts](concepts.md) - general API design concepts referenced throughout this comparison

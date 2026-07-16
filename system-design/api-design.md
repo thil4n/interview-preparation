@@ -1,142 +1,129 @@
-# System Design - API Design
+# API Design
 
-## Designing Effective APIs
+> **API design** is the practice of defining how clients and services communicate - resource shape, protocol semantics, versioning, and failure behavior - so that the contract stays stable, predictable, and safe to evolve.
 
-### Core Principles
+## Why it matters
 
-1. **Clarity**: API should be intuitive and self-documenting
-2. **Consistency**: Naming conventions and patterns should be consistent
-3. **Backward Compatibility**: Changes shouldn't break existing clients
-4. **Flexibility**: Support various use cases and query patterns
-5. **Performance**: Minimize latency and bandwidth
-6. **Security**: Protect data and prevent unauthorized access
+API design questions test whether a candidate thinks about a system from the outside in: can another team integrate against this without reading the source code? Interviewers use it to probe judgment on trade-offs (REST vs GraphQL, URL vs header versioning), and to see if you account for the messy realities of distributed systems - retries, partial failures, and clients you don't control. A well-designed API is also a forcing function for good backend design, since it exposes coupling and inconsistency early.
 
-## RESTful API Design Best Practices
+## Core Principles
 
-### Resource Naming
+- **Clarity**: predictable and self-documenting - a developer should be able to guess the next endpoint.
+- **Consistency**: naming, casing, and error shapes identical across every endpoint.
+- **Backward compatibility**: additive changes shouldn't break existing clients; breaking changes need a version bump.
+- **Statelessness**: each request carries everything needed to process it - no server-side session affinity.
+- **Least surprise**: HTTP verbs and status codes mean what the spec says they mean.
+
+## RESTful Resource Naming
+
+Model nouns (resources), not verbs (actions). Use plural nouns, nest sub-resources under their parent, and let the HTTP method express the action.
 
 ```
 Good:
-GET /api/v1/users/123
-GET /api/v1/users/123/posts
-GET /api/v1/users/123/posts/456
+GET  /api/v1/users/123
+GET  /api/v1/users/123/posts
+GET  /api/v1/users/123/posts/456
 
 Bad:
 GET /api/getUser?id=123
 GET /api/getUserPosts?userId=123
 ```
 
-### Versioning Strategies
+## Versioning Strategies
 
-1. **URL Path**: `/api/v1/users`, `/api/v2/users`
-2. **Query Parameter**: `/api/users?version=1`
-3. **Header**: Custom header like `X-API-Version: 1`
-4. **Content Negotiation**: Via Accept header
+| Strategy | Example | Trade-off |
+|---|---|---|
+| URL path | `/api/v2/users` | Most visible and cache-friendly; clutters the URL and encourages full-resource duplication |
+| Query parameter | `/api/users?version=2` | Easy to default, but often skipped by clients and less cacheable |
+| Custom header | `X-API-Version: 2` | Keeps URLs clean; less discoverable, harder to test in a browser |
+| Content negotiation | `Accept: application/vnd.example.v2+json` | Most "correct" per HTTP semantics; more complex for clients to implement |
 
-### Pagination
+Most public APIs use URL-path versioning for discoverability, bump only the major version on breaking changes, and support the previous version for a defined deprecation window.
+
+## Pagination
+
+Offset-based pagination (`page`/`limit` or `offset`/`limit`) is simple but degrades on large tables and shifts under concurrent writes. Cursor-based pagination (an opaque token pointing to the last seen item) is stable under inserts/deletes and scales better because it avoids `OFFSET` scans in the database.
 
 ```
-/api/users?page=2&limit=20
-/api/users?offset=40&limit=20
-/api/users?cursor=next_page_token
+Offset-based:
+GET /api/users?page=2&limit=20
+
+Cursor-based:
+GET /api/users?cursor=eyJpZCI6NDB9&limit=20
 
 Response:
 {
   "data": [...],
   "pagination": {
-    "page": 2,
-    "total": 500,
-    "limit": 20
+    "next_cursor": "eyJpZCI6NjB9",
+    "has_more": true
   }
 }
 ```
 
-### Filtering and Sorting
+## Filtering, Sorting, and Field Selection
 
 ```
 GET /api/posts?status=published&category=tech
 GET /api/posts?sort=-created_at,title
-GET /api/posts?filter[status]=published&filter[author]=john
-
-Use matrix parameters for complex filters:
-GET /api/posts;status=published;category=tech
+GET /api/users/123?fields=name,email
 ```
 
-### Field Selection (Sparse Fieldsets)
+Sparse fieldsets (`fields=`) reduce payload size for bandwidth-constrained clients. Keep filter/sort syntax consistent across every collection endpoint.
 
-```
-GET /api/users/123?fields=name,email,phone
+## Error Handling
 
-Reduces payload size, improves performance
-```
-
-### Error Responses
+Return a consistent error envelope: machine-readable code, human-readable message, and a request ID for support/debugging - never just a bare status code.
 
 ```json
 {
   "error": {
-    "code": "INVALID_REQUEST",
-    "message": "User not found",
-    "details": {
-      "user_id": "123 is not a valid user ID"
-    },
+    "code": "USER_NOT_FOUND",
+    "message": "User 123 does not exist",
+    "details": { "user_id": "123" },
     "request_id": "abc-123-def"
   }
 }
 ```
 
-### Standard HTTP Status Codes
+| Code | Meaning | Use case |
+|---|---|---|
+| 200 | OK | Successful GET, PUT, PATCH |
+| 201 | Created | Successful POST |
+| 204 | No Content | Successful DELETE |
+| 400 | Bad Request | Malformed input, validation failure |
+| 401 | Unauthorized | Missing or invalid credentials |
+| 403 | Forbidden | Authenticated but not permitted |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Duplicate resource, version/state mismatch |
+| 422 | Unprocessable Entity | Semantically invalid input |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Unhandled server fault |
+| 503 | Service Unavailable | Overloaded or in maintenance |
 
-| Code | Meaning | Use Case |
-|------|---------|----------|
-| 200  | OK | Successful GET, PUT, PATCH |
-| 201  | Created | Successful POST |
-| 204  | No Content | Successful DELETE |
-| 400  | Bad Request | Invalid parameters |
-| 401  | Unauthorized | Authentication required |
-| 403  | Forbidden | Authenticated but not authorized |
-| 404  | Not Found | Resource doesn't exist |
-| 409  | Conflict | Duplicate resource, version mismatch |
-| 429  | Too Many Requests | Rate limit exceeded |
-| 500  | Internal Server Error | Server error |
-| 503  | Service Unavailable | Temporary server issue |
+## Idempotency
 
-## API Authentication & Authorization
+An operation is **idempotent** if repeating it has the same effect as doing it once. `GET`, `PUT`, and `DELETE` are idempotent by HTTP definition; `POST` is not. This matters because clients retry on timeouts, and a timeout doesn't tell you whether the server actually processed the request.
 
-### Authentication Methods
+The fix is a client-generated **idempotency key** sent as a header on `POST` (e.g. `Idempotency-Key: 8f3a...`). The server stores the key with the result of the first execution and returns that cached result on any retry, instead of re-running the side effect - critical for payments and order creation.
 
-1. **API Keys**: Simple but less secure, good for internal/non-critical APIs
-2. **OAuth 2.0**: Industry standard, best for user-facing applications
-3. **JWT (JSON Web Tokens)**: Stateless, scalable, good for microservices
-4. **mTLS**: Mutual TLS, best for service-to-service communication
+```
+POST /api/payments
+Idempotency-Key: 8f3a1c2e-...
 
-### Authorization Patterns
-
-1. **Role-Based Access Control (RBAC)**: Users have roles with permissions
-2. **Attribute-Based Access Control (ABAC)**: Fine-grained permissions based on attributes
-3. **OAuth Scopes**: Define what an API key can do
+First call: charges the card, stores result under the key, returns 201.
+Retry with same key: returns the same 201 response, no second charge.
+```
 
 ## Rate Limiting
 
-### Algorithms
+| Algorithm | How it works | Trade-off |
+|---|---|---|
+| Token bucket | Tokens refill at a fixed rate; each request consumes one | Allows controlled bursts; simple to reason about |
+| Sliding window | Counts requests in a rolling time window | Smooths bursts better than fixed window; more state to track |
+| Leaky bucket | Requests processed at a constant rate, excess queued or dropped | Produces very even output rate; adds latency under load |
 
-**Token Bucket**:
-- Tokens are added at a fixed rate
-- Request consumes a token
-- If no tokens, request is rejected
-- Allows burst traffic
-
-**Sliding Window**:
-- Count requests in a time window
-- If count exceeds limit, reject
-- Simpler but less burst-friendly
-
-**Leaky Bucket**:
-- Fixed rate of request processing
-- Excess requests are queued/rejected
-- Smooth traffic
-
-### Response Headers
+Communicate limits to clients via standard headers so they can back off cooperatively:
 
 ```
 X-RateLimit-Limit: 1000
@@ -144,109 +131,112 @@ X-RateLimit-Remaining: 999
 X-RateLimit-Reset: 1372700873
 ```
 
-## Caching in APIs
+## Authentication and Authorization
 
-### HTTP Caching Headers
+Authentication answers "who are you"; authorization answers "what are you allowed to do." Keep them as separate concerns even when one token carries both.
+
+| Method | Best for |
+|---|---|
+| API keys | Simple server-to-server or internal integrations |
+| OAuth 2.0 | User-facing apps needing delegated, scoped access |
+| JWT | Stateless auth across microservices, verifiable without a shared session store |
+| mTLS | Service-to-service traffic inside a trusted network/mesh |
+
+Authorization is then enforced with RBAC (roles map to permissions), ABAC (decisions based on resource/user attributes), or OAuth scopes limiting what a token can do.
+
+## Request Flow Through a Gateway
+
+A typical production request passes through several concerns before it reaches business logic - each one a potential place to reject or short-circuit the request.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant GW as "API Gateway"
+    participant AuthS as "Auth Service"
+    participant Svc as "Backend Service"
+    participant DB as Database
+
+    C->>GW: "Request + Idempotency-Key + Token"
+    GW->>GW: "Check rate limit"
+    alt Rate limit exceeded
+        GW-->>C: "429 Too Many Requests"
+    else Within limit
+        GW->>AuthS: "Validate token"
+        AuthS-->>GW: "Valid + scopes"
+        alt Invalid token
+            GW-->>C: "401 Unauthorized"
+        else Authorized
+            GW->>Svc: "Forward request"
+            Svc->>Svc: "Check idempotency key cache"
+            Svc->>DB: "Execute operation"
+            DB-->>Svc: "Result"
+            Svc-->>GW: "200 OK + response body"
+            GW-->>C: "200 OK + response body"
+        end
+    end
+```
+
+## Caching
+
+HTTP caching offloads read traffic from the origin. `Cache-Control` governs freshness (`max-age`, `public`/`private`, `no-store`); `ETag`/`If-None-Match` supports validation so a client gets a cheap `304 Not Modified` instead of re-downloading unchanged data.
 
 ```
 Cache-Control: public, max-age=3600
-Cache-Control: private, max-age=300
-Cache-Control: no-cache (validate with server)
-Cache-Control: no-store (never cache)
-
 ETag: "33a64df551425fcc55e4d42a148795d9f25f89d4"
 If-None-Match: "33a64df551425fcc55e4d42a148795d9f25f89d4"
-
-Last-Modified: Wed, 21 Oct 2024 07:28:00 GMT
-If-Modified-Since: Wed, 21 Oct 2024 07:28:00 GMT
 ```
 
-## API Documentation
+## Webhooks
 
-### Essential Elements
-
-1. **Base URL**: `https://api.example.com/v1`
-2. **Authentication**: How to authenticate
-3. **Endpoints**: All available endpoints with methods
-4. **Parameters**: Required and optional parameters
-5. **Responses**: Example responses and schemas
-6. **Error Codes**: Possible error responses
-7. **Rate Limits**: Request limits
-8. **Changelog**: Version history and breaking changes
-
-### Documentation Tools
-
-- OpenAPI/Swagger
-- Postman
-- GraphQL Schema (for GraphQL APIs)
-- API Blueprint
-
-## Webhooks for Real-time Events
+Webhooks push events to clients instead of making them poll. Sign payloads with HMAC so the receiver can verify authenticity, include a timestamp to reject replays, and retry failed deliveries with exponential backoff.
 
 ```
-Setup:
-POST /api/webhooks
-{
-  "url": "https://client.example.com/callback",
-  "events": ["user.created", "user.updated"]
-}
-
-Delivery:
 POST https://client.example.com/callback
+X-Signature: hmac-sha256=...
 {
   "event": "user.created",
   "data": { "id": 123, "name": "John" },
   "timestamp": "2024-01-20T10:00:00Z"
 }
-
-Security:
-- Sign webhooks with HMAC
-- Include timestamp to prevent replay attacks
-- Implement exponential backoff for retries
 ```
 
-## GraphQL as an Alternative
+## REST vs GraphQL
 
-### Advantages over REST
+| | REST | GraphQL |
+|---|---|---|
+| Endpoints | Many, one per resource | Single endpoint |
+| Fetching | Over/under-fetching common | Client specifies exact fields needed |
+| Caching | Native HTTP caching (per URL) | Harder - typically app-level caching |
+| Typing | Optional (OpenAPI on top) | Schema is mandatory and strongly typed |
+| Best fit | Public APIs, simple CRUD, cache-heavy reads | Complex/nested data, mobile clients, many client shapes |
 
-- Single endpoint, no over/under-fetching
-- Strongly typed schema
-- Real-time subscriptions
-- Better for mobile clients (reduced payload)
+## Deprecating a Version
 
-### Disadvantages
+Announce the deprecation and target removal date well in advance, support the old version for a defined window (commonly 6-12 months), publish a migration guide, and monitor usage so you know when removal is safe.
 
-- Steeper learning curve
-- Caching is more complex
-- More complex queries can be expensive
+## Common Interview Questions
 
-## Deprecating API Versions
+**Q: What's the difference between PUT and PATCH?**
+A: `PUT` replaces the entire resource and is idempotent. `PATCH` applies a partial update and is only idempotent if you design it that way (e.g. setting an absolute value rather than incrementing).
 
-1. **Announce**: Communicate deprecation plans early
-2. **Support Window**: Maintain old version for 6-12 months
-3. **Migration Guide**: Provide clear upgrade instructions
-4. **Tools**: Offer tools to help migrate
-5. **Monitoring**: Track usage of old versions
+**Q: How do you make a POST request idempotent?**
+A: Require an idempotency key (a client-generated unique token) in a header. The server persists the key with the result of the first execution and returns that cached result on any retry with the same key, instead of re-running the side effect.
 
-## Interview Questions
+**Q: Why prefer cursor-based pagination over offset-based for large datasets?**
+A: Offset pagination scans and discards `offset` rows, getting slower as the offset grows, and results can shift if rows are inserted or deleted between pages. Cursor pagination anchors to a stable position (e.g. the last seen ID), so it stays fast and consistent under concurrent writes.
 
-1. **How would you design an API for a real-time chat application?**
-   - WebSockets vs HTTP, message ordering, scalability
+**Q: How would you version a large public API without breaking existing clients?**
+A: Version at the URL path for breaking changes, keep additive changes (new optional fields, new endpoints) unversioned, and run the previous major version alongside the new one for a published deprecation window before removal.
 
-2. **Design a payment processing API**
-   - Idempotency, webhooks, error handling, security
+**Q: How do you prevent abuse of a public API?**
+A: Combine authentication (attributable requests), rate limiting (token bucket or sliding window per key/IP), input validation, and monitoring/alerting on anomalous traffic.
 
-3. **How would you handle API versioning for a large-scale API?**
-   - Trade-offs of different versioning strategies
+**Q: What should a good API error response include?**
+A: A correct HTTP status code, a stable machine-readable error code, a human-readable message, optional field-level details, and a request ID for tracing.
 
-4. **Design an API that handles file uploads efficiently**
-   - Chunked uploads, progress tracking, security
+**Q: When would you choose GraphQL over REST?**
+A: When clients have highly varied data needs (e.g. mobile vs web) and REST would force over- or under-fetching. The trade-off is losing simple HTTP-level caching and taking on server-side query cost management.
 
-5. **How do you prevent abuse in your API?**
-   - Rate limiting, authentication, input validation
+## Related
 
-6. **Design a search API that's scalable and performant**
-   - Pagination, filtering, indexing, caching
-
-7. **How would you implement a webhook system?**
-   - Delivery guarantees, retries, security
+- [Scalability](scalability.md) - rate limiting, caching, and pagination choices here are directly shaped by scalability trade-offs
