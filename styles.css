@@ -1063,6 +1063,32 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* Mermaid diagrams */
+.markdown-body .mermaid {
+  margin: 20px 0;
+  padding: 20px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--border-radius-lg);
+  text-align: center;
+  overflow-x: auto;
+  line-height: normal;
+}
+
+.markdown-body .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Pre-render state: show diagram source as muted mono until mermaid swaps in SVG */
+.markdown-body .mermaid:not([data-processed="true"]) {
+  color: var(--color-text-muted);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
 /* Inline keyboard hint */
 kbd {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;

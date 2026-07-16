@@ -94,7 +94,37 @@ class UIRenderer {
         ${html}
       </article>
     `;
+        this.renderMermaid();
         this.highlightCode();
+    }
+
+    renderMermaid() {
+        if (typeof mermaid === 'undefined') return;
+
+        // marked emits ```mermaid fences as <pre><code class="language-mermaid">.
+        // Convert each into a <pre class="mermaid"> holding the raw diagram source,
+        // then let mermaid render them to SVG. Done before highlightCode() so the
+        // syntax highlighter never touches diagram blocks.
+        const codeBlocks = this.elements.contentContainer.querySelectorAll('code.language-mermaid');
+        const targets = [];
+
+        codeBlocks.forEach(code => {
+            const pre = code.closest('pre');
+            if (!pre) return;
+            const container = document.createElement('pre');
+            container.className = 'mermaid';
+            container.textContent = code.textContent;
+            pre.replaceWith(container);
+            targets.push(container);
+        });
+
+        if (targets.length) {
+            try {
+                mermaid.run({ nodes: targets });
+            } catch (error) {
+                console.error('Mermaid render error:', error);
+            }
+        }
     }
 
     renderLoading() {

@@ -18,6 +18,9 @@ class AppController {
         // Apply saved theme (keeps state + DOM in sync with the pre-paint script)
         this.loadSavedTheme();
 
+        // Initialize diagram rendering
+        this.initMermaid();
+
         // Discover folders
         const folders = await folderDiscovery.discoverFolders();
         stateManager.setState({ folders });
@@ -158,6 +161,24 @@ class AppController {
         document.documentElement.setAttribute('data-theme', newTheme);
         stateManager.setState({ theme: newTheme });
         localStorage.setItem('theme', newTheme);
+
+        // Diagrams are baked to SVG at render time, so re-init the theme and
+        // re-render the current document to recolor any mermaid diagrams.
+        this.initMermaid();
+        if (state.currentFolder && state.currentFile) {
+            this.loadContent(state.currentFolder, state.currentFile);
+        }
+    }
+
+    initMermaid() {
+        if (typeof mermaid === 'undefined') return;
+        const isDark = stateManager.getState().theme !== 'light';
+        mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: 'strict',
+            theme: isDark ? 'dark' : 'neutral',
+            fontFamily: 'inherit'
+        });
     }
 
     loadSavedTheme() {
