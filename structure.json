@@ -24,6 +24,13 @@
     "aws.md",
     "concepts.md"
   ],
+    "computer-architecture": [
+    "basics.md",
+    "memory-hierarchy.md",
+    "multicore.md",
+    "pipelining.md",
+    "questions.md"
+  ],
   "concurrency": [
     "multithreading.md"
   ],
